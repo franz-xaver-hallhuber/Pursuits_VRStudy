@@ -104,18 +104,20 @@ public class PupilGazeTracker:MonoBehaviour
 	{
 		MovingAverage xavg;
 		MovingAverage yavg;
+        float lastTimeStamp;
 
 		public EyeData(int len)
 		{
 			 xavg=new MovingAverage(len);
 			 yavg=new MovingAverage(len);
 		}
-		public Vector2 gaze=new Vector2();
-		public Vector2 AddGaze(float x,float y)
+		public Vector3 gaze=new Vector2();
+		public Vector3 AddGaze(float x,float y, float ts)
 		{
 			gaze.x = xavg.AddSample (x);
 			gaze.y = yavg.AddSample (y);
-			return gaze;
+            lastTimeStamp = ts;
+			return new Vector3(gaze.x,gaze.y,lastTimeStamp); //use z-component of Vector to transfer timestamp
 		}
 	}
 	EyeData leftEye;
@@ -201,22 +203,22 @@ public class PupilGazeTracker:MonoBehaviour
 	{
 		get{ return new Vector2((_eyePos.x-0.5f)*CanvasWidth,(_eyePos.y-0.5f)*CanvasHeight); }
 	}
-	public Vector2 LeftEyePos
+	public Vector3 LeftEyePos
 	{
 		get{ return leftEye.gaze; }
 	}
-	public Vector2 RightEyePos
+	public Vector3 RightEyePos
 	{
 		get{ return rightEye.gaze; }
 	}
 
-	public Vector2 GetEyeGaze(GazeSource s)
+	public Vector3 GetEyeGaze(GazeSource s)
 	{
-		if (s == GazeSource.RightEye)
-			return RightEyePos;
+        if (s == GazeSource.RightEye)
+            return RightEyePos;
 		if (s == GazeSource.LeftEye)
 			return LeftEyePos;
-		return NormalizedEyePos;
+		return new Vector3(NormalizedEyePos.x,NormalizedEyePos.y,LeftEyePos.z); //take timestamp from left eye when using NormalizedEyePos
 	}
 
 	public PupilGazeTracker()
@@ -432,11 +434,11 @@ public class PupilGazeTracker:MonoBehaviour
 			_eyePos.x = (leftEye.gaze.x + rightEye.gaze.x) * 0.5f;
 			_eyePos.y = (leftEye.gaze.y + rightEye.gaze.y) * 0.5f;
 			if (data.id == 0) {
-				leftEye.AddGaze (x, y);
+				leftEye.AddGaze (x, y,(float) data.timestamp);
 				if (OnEyeGaze != null)
 					OnEyeGaze (this);
 			} else if (data.id == 1) {
-				rightEye.AddGaze (x, y);
+				rightEye.AddGaze (x, y, (float)data.timestamp);
 				if (OnEyeGaze != null)
 					OnEyeGaze (this);
 			}
