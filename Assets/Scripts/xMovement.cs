@@ -5,7 +5,7 @@ using System;
 
 public class xMovement : MonoBehaviour {
     public float speed, maxX, minX;
-    StreamWriter write;
+    //StreamWriter write;
 
     //progressiveTilt parentobject;
     bool tiltMyFather;
@@ -14,7 +14,7 @@ public class xMovement : MonoBehaviour {
 	void Start () {
         //Vector3 temp = transform.localPosition;
         //transform.localPosition = new Vector3(temp.x, temp.y, temp.z);
-        write = new StreamWriter("log_" + name + "_xmove_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+        //write = new StreamWriter("log_" + name + "_xmove_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         
 	}
 	
@@ -32,11 +32,11 @@ public class xMovement : MonoBehaviour {
             speed = -speed;
             transform.localPosition = new Vector3(minX, temp.y, temp.z);
         }
-        write.WriteLine(Time.time + ";" + transform.localPosition.x);
+        //write.WriteLine(Time.time + ";" + transform.localPosition.x);
     }
 
     private void OnApplicationQuit()
     {
-        write.Close();
+        //write.Close();
     }
 }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System;
 using System.Linq;
+using System.IO;
 
 public class Correlator : MonoBehaviour {
     public class TimePoint
@@ -21,14 +22,20 @@ public class Correlator : MonoBehaviour {
     public class MovingObject
     {
         GameObject go;
+        private StreamWriter write;
+
         public string name { get; set; }
         public List<TimePoint> trajectory { get; set; }
+
+        
 
         public MovingObject(GameObject go)
         {
             this.go = go;
             trajectory = new List<TimePoint>();
             if (go != null) name = go.name;
+            else name = "gaze";
+            write = new StreamWriter("log_" + name + "_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         }
 
         public string getName()
@@ -44,12 +51,14 @@ public class Correlator : MonoBehaviour {
         public void addNew()
         {
             trajectory.Add(new TimePoint(Time.time, go.transform.localPosition));
+            write.WriteLine(Time.time + ";" + go.transform.localPosition.x);
             cleanUp();
         }
 
         public void addNewGaze(float timeOfCapture, Vector3 gazePoint)
         {
             trajectory.Add(new TimePoint(timeOfCapture, gazePoint));
+            write.WriteLine(timeOfCapture + ";" + gazePoint.x);
             cleanUp();
         }
 
@@ -89,15 +98,17 @@ public class Correlator : MonoBehaviour {
     private volatile bool _shouldStop;
 
     Thread performCalc;
+    private StreamWriter write;
 
     // Use this for initialization
     void Start () {
         sceneObjects = new List<MovingObject>();
         gazeTrajectory = new MovingObject(null);
         activeObjects = new List<string>();
+        write = new StreamWriter("log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
 
         // search for objects tagged 'Trackable'
-        foreach(GameObject go in GameObject.FindGameObjectsWithTag("Trackable")) register(go);
+        foreach (GameObject go in GameObject.FindGameObjectsWithTag("Trackable")) register(go);
 
         StartCoroutine(CalculatePearson());
         StartCoroutine(CheckForResult());
@@ -108,7 +119,7 @@ public class Correlator : MonoBehaviour {
         foreach (MovingObject mo in sceneObjects) mo.addNew();
         Vector3 newgaze = PupilGazeTracker.Instance.GetEyeGaze(Gaze);
         Debug.Log(newgaze.ToString());
-        gazeTrajectory.addNewGaze(Time.time, newgaze);
+        gazeTrajectory.addNewGaze(newgaze.z, newgaze);
     }
 
     public void register(GameObject go)
@@ -135,7 +146,7 @@ public class Correlator : MonoBehaviour {
                 nenner = Math.Sqrt(nenner);
                 coeff = zaehler / nenner;
 
-                Debug.Log(coeff);
+                write.WriteLine(Time.time + ";" + coeff);
 
                 if (coeff > 0.5) activeObjects.Add(mo.name);
                 else activeObjects.Remove(mo.name);
