@@ -9,10 +9,10 @@ using System.IO;
 public class Correlator : MonoBehaviour {
     public class TimePoint
     {
-        public float timestamp { get; set; }
+        public DateTime timestamp { get; set; }
         public Vector3 pos { get; set; }
 
-        public TimePoint(float time, Vector3 currentPos)
+        public TimePoint(DateTime time, Vector3 currentPos)
         {
             this.timestamp = time;
             this.pos = currentPos;
@@ -22,20 +22,20 @@ public class Correlator : MonoBehaviour {
     public class MovingObject
     {
         GameObject go;
-        private StreamWriter write;
+        private StreamWriter positionWriter;
+        private Vector3 _last;
 
         public string name { get; set; }
         public List<TimePoint> trajectory { get; set; }
-
         
-
         public MovingObject(GameObject go)
         {
             this.go = go;
             trajectory = new List<TimePoint>();
             if (go != null) name = go.name;
             else name = "gaze";
-            write = new StreamWriter("log_" + name + "_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+            positionWriter = new StreamWriter("log_" + name + "_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+            positionWriter.WriteLine(name+"Timestamp;"+name+"XPos");
         }
 
         public string getName()
@@ -43,22 +43,40 @@ public class Correlator : MonoBehaviour {
             return go.name;
         }
 
+        /// <summary>
+        /// if the oldest timestamp was more than w ticks ago, remove the oldest
+        /// </summary>
         void cleanUp()
         {
-            if (trajectory.Count > 120) trajectory.RemoveAt(0);
+            //if (trajectory.Count > 120) trajectory.RemoveAt(0);
+            if (trajectory.Count > 0)
+            {
+                if ((DateTime.Now - trajectory[0].timestamp).Milliseconds > Correlator.w) trajectory.RemoveAt(0);
+                if (trajectory.Count > 0)
+                    if ((DateTime.Now - trajectory[0].timestamp).Milliseconds > Correlator.w) cleanUp();
+            }
+            
         }
 
-        public void addNew()
+        /// <summary>
+        /// Adds the current position of a MovingObject to its trajectory
+        /// </summary>
+        public void addNewPosition()
         {
-            trajectory.Add(new TimePoint(Time.time, go.transform.localPosition));
-            write.WriteLine(Time.time + ";" + go.transform.localPosition.x);
+            trajectory.Add(new TimePoint(DateTime.Now, _last));
+            positionWriter.WriteLine(DateTime.Now.Millisecond + ";" + _last.x);
             cleanUp();
         }
 
-        public void addNewGaze(float timeOfCapture, Vector3 gazePoint)
+        public void updatePosition()
+        {
+            _last = go.transform.localPosition;
+        }
+
+        public void addNewGaze(DateTime timeOfCapture, Vector3 gazePoint)
         {
             trajectory.Add(new TimePoint(timeOfCapture, gazePoint));
-            write.WriteLine(timeOfCapture + ";" + gazePoint.x);
+            positionWriter.WriteLine(timeOfCapture + ";" + gazePoint.x);
             cleanUp();
         }
 
@@ -87,39 +105,54 @@ public class Correlator : MonoBehaviour {
         {
             return trajectory.Count;
         }
+
+        public void killMe()
+        {
+            positionWriter.Close();
+        }
     }
 
     List<MovingObject> sceneObjects;
     MovingObject gazeTrajectory;
-    public static float corrDurationSec = 0.1f;
     public PupilGazeTracker.GazeSource Gaze;
     List<string> activeObjects;
 
-    private volatile bool _shouldStop;
+    public static long w;
+    public float correlationDurationMs;
 
-    Thread performCalc;
-    private StreamWriter write;
+    private volatile bool _shouldStop;
+    
+    private StreamWriter correlationWriter;
+
+    private bool _calcInProgress;
+
+    //public delegate void GazeAction();
+    //public static event GazeAction OnNewGaze;
 
     // Use this for initialization
     void Start () {
         sceneObjects = new List<MovingObject>();
         gazeTrajectory = new MovingObject(null);
         activeObjects = new List<string>();
-        write = new StreamWriter("log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+        correlationWriter = new StreamWriter("log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+        correlationWriter.WriteLine("Gameobject;Timestamp;r");
 
-        // search for objects tagged 'Trackable'
+        // search for objects tagged 'Trackable' and add them to the list
         foreach (GameObject go in GameObject.FindGameObjectsWithTag("Trackable")) register(go);
 
-        StartCoroutine(CalculatePearson());
-        StartCoroutine(CheckForResult());
+        // set time window for the correlation
+        w = (long)(correlationDurationMs * Math.Pow(10, 6)); //ms to ns
+
+        PupilGazeTracker.OnEyeGaze += new PupilGazeTracker.OnEyeGazeDeleg(UpdateTrajectories);
+
+        //StartCoroutine(UpdateTrajectories()); // Coroutine to update the trajectories
+        //StartCoroutine(CalculatePearson());
+        //StartCoroutine(CheckForResult());
 	}
 	
 	// Update is called once per frame
 	void Update () {
-        foreach (MovingObject mo in sceneObjects) mo.addNew();
-        Vector3 newgaze = PupilGazeTracker.Instance.GetEyeGaze(Gaze);
-        Debug.Log(newgaze.ToString());
-        gazeTrajectory.addNewGaze(newgaze.z, newgaze);
+        foreach (MovingObject mo in sceneObjects) mo.updatePosition();        
     }
 
     public void register(GameObject go)
@@ -127,13 +160,23 @@ public class Correlator : MonoBehaviour {
         sceneObjects.Add(new MovingObject(go));
     }
 
+    void UpdateTrajectories(PupilGazeTracker manager)
+    {
+        foreach (MovingObject mo in sceneObjects) mo.addNewPosition();
+        Vector3 newgaze = PupilGazeTracker.Instance.GetEyeGaze(Gaze);
+        gazeTrajectory.addNewGaze(new DateTime(DateTime.Now.Ticks - (long)newgaze.z), newgaze);
+        Debug.Log("New Gaze");
+    }
 
 
     IEnumerator CalculatePearson()
     {
         while (!_shouldStop)
         {
-            foreach (MovingObject mo in sceneObjects)
+            List<MovingObject> _tempObjects = sceneObjects; //work on a copy to (hopefully) improve performance
+            MovingObject _tempGaze = gazeTrajectory;
+
+            foreach (MovingObject mo in _tempObjects)
             {
                 double zaehler = 0, nenner = 0, nenner1 = 0, nenner2 = 0, coeff = 0;
                 for (int i = 0; i < Math.Min(gazeTrajectory.length(), mo.length()); i++)
@@ -146,30 +189,33 @@ public class Correlator : MonoBehaviour {
                 nenner = Math.Sqrt(nenner);
                 coeff = zaehler / nenner;
 
-                write.WriteLine(Time.time + ";" + coeff);
+                correlationWriter.WriteLine(mo.name + ";" + DateTime.Now.Millisecond + ";" + coeff); //only makes sense when there is one object in the scene
 
-                if (coeff > 0.5) activeObjects.Add(mo.name);
-                else activeObjects.Remove(mo.name);
-            }
-            yield return null;
-        }
-    }
-
-    IEnumerator CheckForResult()
-    {
-        while(true)
-        {
-            foreach (MovingObject mo in sceneObjects)
-            {
-                if (activeObjects.Contains(mo.getName())) mo.activate(true);
+                if (coeff > 0.5) mo.activate(true);
                 else mo.activate(false);
-                yield return null;
             }
+            yield return new WaitForSeconds(0.005f); //wait for x seconds before the next correlation
         }
     }
+
+    //IEnumerator CheckForResult()
+    //{
+    //    while(true)
+    //    {
+    //        foreach (MovingObject mo in sceneObjects)
+    //        {
+    //            if (activeObjects.Contains(mo.getName())) mo.activate(true);
+    //            else mo.activate(false);
+    //            yield return null;
+    //        }
+    //    }
+    //}
 
     private void OnDestroy()
     {
         _shouldStop = true;
+        foreach (MovingObject mo in sceneObjects) mo.killMe();
+        correlationWriter.Close();
+        gazeTrajectory.killMe();
     }
 }

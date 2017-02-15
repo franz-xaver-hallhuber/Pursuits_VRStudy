@@ -111,11 +111,12 @@ public class PupilGazeTracker:MonoBehaviour
 			 xavg=new MovingAverage(len);
 			 yavg=new MovingAverage(len);
 		}
-		public Vector3 gaze=new Vector2();
+		public Vector3 gaze=new Vector3();
 		public Vector3 AddGaze(float x,float y, float ts)
 		{
 			gaze.x = xavg.AddSample (x);
 			gaze.y = yavg.AddSample (y);
+            gaze.z = ts;
             lastTimeStamp = ts;
 			return new Vector3(gaze.x,gaze.y,lastTimeStamp); //use z-component of Vector to transfer timestamp
 		}
@@ -124,7 +125,7 @@ public class PupilGazeTracker:MonoBehaviour
 	EyeData rightEye;
 
 	Vector2 _eyePos;
-	float confidence;
+	//float confidence;
 
 
 	Thread _serviceThread;
@@ -138,7 +139,7 @@ public class PupilGazeTracker:MonoBehaviour
 
 	public event OnCalibrationStartedDeleg OnCalibrationStarted;
 	public event OnCalibrationDoneDeleg OnCalibrationDone;
-	public event OnEyeGazeDeleg OnEyeGaze;
+	public static event OnEyeGazeDeleg OnEyeGaze;
 	public event OnCalibDataDeleg OnCalibData;
 
 
@@ -218,7 +219,8 @@ public class PupilGazeTracker:MonoBehaviour
             return RightEyePos;
 		if (s == GazeSource.LeftEye)
 			return LeftEyePos;
-		return new Vector3(NormalizedEyePos.x,NormalizedEyePos.y,LeftEyePos.z); //take timestamp from left eye when using NormalizedEyePos
+        //take timestamp from right eye when using NormalizedEyePos, as left eye tracker is currently defective
+		return new Vector3(NormalizedEyePos.x,NormalizedEyePos.y,RightEyePos.z); 
 	}
 
 	public PupilGazeTracker()
@@ -233,7 +235,7 @@ public class PupilGazeTracker:MonoBehaviour
 		rightEye= new EyeData (SamplesCount);
 
 		_dataLock = new object ();
-
+        
 		_serviceThread = new Thread(NetMQClient);
 		_serviceThread.Start();
 
@@ -267,11 +269,17 @@ public class PupilGazeTracker:MonoBehaviour
 		return recievedMsg;
 	}
 
-	float GetPupilTimestamp()
+    /// <summary>
+    /// Determines the current timestamp from Pupil capture and the round trip delay
+    /// by taking half of the time it took from sending the request to receiving the reply
+    /// </summary>
+    /// <returns>An array of length 2. [0] pupil timestamp [1] round trip delay</returns>
+	float[] GetPupilTimestamp()
 	{
-		_requestSocket.SendFrame ("t");
+        DateTime sendTime = DateTime.Now;
+        _requestSocket.SendFrame ("t");
 		NetMQMessage recievedMsg=_requestSocket.ReceiveMultipartMessage ();
-		return float.Parse(recievedMsg[0].ConvertToString());
+		return new float[] { float.Parse(recievedMsg[0].ConvertToString()), (DateTime.Now.Ticks - sendTime.Ticks) / 2 };
 	}
 
 	void NetMQClient()
@@ -434,18 +442,18 @@ public class PupilGazeTracker:MonoBehaviour
 			_eyePos.x = (leftEye.gaze.x + rightEye.gaze.x) * 0.5f;
 			_eyePos.y = (leftEye.gaze.y + rightEye.gaze.y) * 0.5f;
 			if (data.id == 0) {
-				leftEye.AddGaze (x, y,(float) data.timestamp);
+				leftEye.AddGaze (x, y,GetPupilTimestamp()[1]);
 				if (OnEyeGaze != null)
 					OnEyeGaze (this);
 			} else if (data.id == 1) {
-				rightEye.AddGaze (x, y, (float)data.timestamp);
+				rightEye.AddGaze (x, y, GetPupilTimestamp()[1]);
 				if (OnEyeGaze != null)
 					OnEyeGaze (this);
 			}
 
 
 		} else if (m_status == EStatus.Calibration) {//gaze calibration stage
-			float t=GetPupilTimestamp();
+			float t=GetPupilTimestamp()[0];
 			var ref0=new Dictionary<string,object>(){{"norm_pos",new float[]{_calibPoints[_currCalibPoint].x,_calibPoints[_currCalibPoint].y}},{"timestamp",t},{"id",0}};
 			var ref1=new Dictionary<string,object>(){{"norm_pos",new float[]{_calibPoints[_currCalibPoint].x,_calibPoints[_currCalibPoint].y}},{"timestamp",t},{"id",1}};
 
