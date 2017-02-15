@@ -279,6 +279,7 @@ public class PupilGazeTracker:MonoBehaviour
         DateTime sendTime = DateTime.Now;
         _requestSocket.SendFrame ("t");
 		NetMQMessage recievedMsg=_requestSocket.ReceiveMultipartMessage ();
+        Debug.Log(float.Parse(recievedMsg[0].ConvertToString()));
 		return new float[] { float.Parse(recievedMsg[0].ConvertToString()), (DateTime.Now.Ticks - sendTime.Ticks) / 2 };
 	}
 
@@ -319,7 +320,6 @@ public class PupilGazeTracker:MonoBehaviour
 					try
 					{
 						string msgType=msg[0].ConvertToString();
-						//Debug.Log(msgType);
 						if(msgType=="gaze")
 						{
 							var message = MsgPack.Unpacking.UnpackObject(msg[1].ToByteArray());
@@ -441,11 +441,11 @@ public class PupilGazeTracker:MonoBehaviour
 			y = (float)data.norm_pos [1];
 			_eyePos.x = (leftEye.gaze.x + rightEye.gaze.x) * 0.5f;
 			_eyePos.y = (leftEye.gaze.y + rightEye.gaze.y) * 0.5f;
-			if (data.id == 0) {
+			if (data.id == 1) {
 				leftEye.AddGaze (x, y,GetPupilTimestamp()[1]);
 				if (OnEyeGaze != null)
 					OnEyeGaze (this);
-			} else if (data.id == 1) {
+			} else if (data.id == 0) {
 				rightEye.AddGaze (x, y, GetPupilTimestamp()[1]);
 				if (OnEyeGaze != null)
 					OnEyeGaze (this);

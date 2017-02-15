@@ -23,7 +23,7 @@ public class Correlator : MonoBehaviour {
     {
         GameObject go;
         private StreamWriter positionWriter;
-        private Vector3 _last;
+        private Vector3 _current;
 
         public string name { get; set; }
         public List<TimePoint> trajectory { get; set; }
@@ -51,9 +51,9 @@ public class Correlator : MonoBehaviour {
             //if (trajectory.Count > 120) trajectory.RemoveAt(0);
             if (trajectory.Count > 0)
             {
-                if ((DateTime.Now - trajectory[0].timestamp).Milliseconds > Correlator.w) trajectory.RemoveAt(0);
+                if ((DateTime.Now - trajectory[0].timestamp).TotalMilliseconds > Correlator.w) trajectory.RemoveAt(0);
                 if (trajectory.Count > 0)
-                    if ((DateTime.Now - trajectory[0].timestamp).Milliseconds > Correlator.w) cleanUp();
+                    if ((DateTime.Now - trajectory[0].timestamp).TotalMilliseconds > Correlator.w) cleanUp();
             }
             
         }
@@ -63,14 +63,35 @@ public class Correlator : MonoBehaviour {
         /// </summary>
         public void addNewPosition()
         {
-            trajectory.Add(new TimePoint(DateTime.Now, _last));
-            positionWriter.WriteLine(DateTime.Now.Millisecond + ";" + _last.x);
+            trajectory.Add(new TimePoint(DateTime.Now, _current));
+            positionWriter.WriteLine((DateTime.Now - Correlator.startTime).TotalMilliseconds+ ";" + _current.x);
             cleanUp();
         }
 
+        /// <summary>
+        /// Interpolates between the last recorded position and the current position to determine the position at a given time
+        /// </summary>
+        /// <param name="atTime">the timestamp for which the position should be calulated</param>
+        public void addNewPosition(DateTime atTime)
+        {
+            if (trajectory.Count > 0)
+            {
+                TimePoint _last = trajectory[trajectory.Count - 1];
+                float scale = (float)((atTime - _last.timestamp).TotalMilliseconds / (DateTime.Now - _last.timestamp).TotalMilliseconds);
+                trajectory.Add(new TimePoint(atTime, _current + Vector3.Scale(_current - _last.pos, new Vector3(scale, scale, scale))));
+            } else
+            {
+                // in case trajectory is empty
+                addNewPosition();
+            }
+        }
+
+        /// <summary>
+        /// to be called by the Update() method so that threads and coroutines can work with GameObject positions
+        /// </summary>
         public void updatePosition()
         {
-            _last = go.transform.localPosition;
+            _current = go.transform.localPosition;
         }
 
         public void addNewGaze(DateTime timeOfCapture, Vector3 gazePoint)
@@ -126,6 +147,8 @@ public class Correlator : MonoBehaviour {
 
     private bool _calcInProgress;
 
+    public static DateTime startTime;
+
     //public delegate void GazeAction();
     //public static event GazeAction OnNewGaze;
 
@@ -135,7 +158,7 @@ public class Correlator : MonoBehaviour {
         gazeTrajectory = new MovingObject(null);
         activeObjects = new List<string>();
         correlationWriter = new StreamWriter("log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-        correlationWriter.WriteLine("Gameobject;Timestamp;r");
+        correlationWriter.WriteLine("Gameobject;Timestamp;r;t");
 
         // search for objects tagged 'Trackable' and add them to the list
         foreach (GameObject go in GameObject.FindGameObjectsWithTag("Trackable")) register(go);
@@ -144,9 +167,10 @@ public class Correlator : MonoBehaviour {
         w = (long)(correlationDurationMs * Math.Pow(10, 6)); //ms to ns
 
         PupilGazeTracker.OnEyeGaze += new PupilGazeTracker.OnEyeGazeDeleg(UpdateTrajectories);
+        startTime = DateTime.Now;
 
         //StartCoroutine(UpdateTrajectories()); // Coroutine to update the trajectories
-        //StartCoroutine(CalculatePearson());
+        StartCoroutine(CalculatePearson());
         //StartCoroutine(CheckForResult());
 	}
 	
@@ -160,12 +184,23 @@ public class Correlator : MonoBehaviour {
         sceneObjects.Add(new MovingObject(go));
     }
 
+    /// <summary>
+    /// Gets called if PupilGazeTracker receives a new gazepoint. 
+    /// Initiates addition of a new TimePoint to the trajectories of all MovingObjects
+    /// and to the gazeTrajectory
+    /// </summary>
+    /// <param name="manager"></param>
     void UpdateTrajectories(PupilGazeTracker manager)
     {
-        foreach (MovingObject mo in sceneObjects) mo.addNewPosition();
+        // receive new gaze point
         Vector3 newgaze = PupilGazeTracker.Instance.GetEyeGaze(Gaze);
-        gazeTrajectory.addNewGaze(new DateTime(DateTime.Now.Ticks - (long)newgaze.z), newgaze);
-        Debug.Log("New Gaze");
+        // calculate the time at which the gaze was probably recorded
+        DateTime _correctedTs = new DateTime(DateTime.Now.Ticks - (long)newgaze.z);
+        // add new gaze point to the trajectory
+        gazeTrajectory.addNewGaze(_correctedTs, newgaze);
+        // add positions at the moment of _correctedTs to all MovingObjects' trajectories
+        foreach (MovingObject mo in sceneObjects) mo.addNewPosition(_correctedTs);
+        //Debug.Log("New Gaze");
     }
 
 
@@ -173,26 +208,37 @@ public class Correlator : MonoBehaviour {
     {
         while (!_shouldStop)
         {
-            List<MovingObject> _tempObjects = sceneObjects; //work on a copy to (hopefully) improve performance
+            DateTime calcTime;
+            MovingObject[] _tempObjects = new MovingObject[sceneObjects.Count];
+            sceneObjects.CopyTo(_tempObjects); //work on a copy to (hopefully) improve performance
+            //List<MovingObject> _tempObjects = sceneObjects.; 
             MovingObject _tempGaze = gazeTrajectory;
 
             foreach (MovingObject mo in _tempObjects)
             {
-                double zaehler = 0, nenner = 0, nenner1 = 0, nenner2 = 0, coeff = 0;
-                for (int i = 0; i < Math.Min(gazeTrajectory.length(), mo.length()); i++)
+                try
                 {
-                    zaehler += (gazeTrajectory.getXPoints()[i] - gazeTrajectory.getXPoints().Average()) * (mo.getXPoints()[i] - mo.getXPoints().Average());
-                    nenner1 += Math.Pow((gazeTrajectory.getXPoints()[i] - gazeTrajectory.getXPoints().Average()), 2);
-                    nenner2 += Math.Pow((mo.getXPoints()[i] - mo.getXPoints().Average()), 2);
+                    calcTime = DateTime.Now;
+                    double zaehler = 0, nenner = 0, nenner1 = 0, nenner2 = 0, coeff = 0;
+                    for (int i = 0; i < Math.Min(gazeTrajectory.length(), mo.length()); i++)
+                    {
+                        zaehler += (gazeTrajectory.getXPoints()[i] - gazeTrajectory.getXPoints().Average()) * (mo.getXPoints()[i] - mo.getXPoints().Average());
+                        nenner1 += Math.Pow((gazeTrajectory.getXPoints()[i] - gazeTrajectory.getXPoints().Average()), 2);
+                        nenner2 += Math.Pow((mo.getXPoints()[i] - mo.getXPoints().Average()), 2);
+                    }
+                    nenner = nenner1 * nenner2;
+                    nenner = Math.Sqrt(nenner);
+                    coeff = zaehler / nenner;
+
+                    correlationWriter.WriteLine(mo.name + ";" + (DateTime.Now-startTime).TotalMilliseconds + ";" + coeff + ";" + (DateTime.Now-calcTime).TotalMilliseconds);
+
+                    if (coeff > 0.5) mo.activate(true);
+                    else mo.activate(false);
+                } catch (IndexOutOfRangeException ie)
+                {
+                    Debug.LogError("Out of bounds");
                 }
-                nenner = nenner1 * nenner2;
-                nenner = Math.Sqrt(nenner);
-                coeff = zaehler / nenner;
-
-                correlationWriter.WriteLine(mo.name + ";" + DateTime.Now.Millisecond + ";" + coeff); //only makes sense when there is one object in the scene
-
-                if (coeff > 0.5) mo.activate(true);
-                else mo.activate(false);
+                
             }
             yield return new WaitForSeconds(0.005f); //wait for x seconds before the next correlation
         }
