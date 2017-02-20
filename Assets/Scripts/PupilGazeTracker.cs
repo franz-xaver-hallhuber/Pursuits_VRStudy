@@ -125,9 +125,11 @@ public class PupilGazeTracker:MonoBehaviour
 	EyeData rightEye;
 
 	Vector2 _eyePos;
-	//float confidence;
+    //float confidence;
 
+    public TimeSpan _globalTime;
 
+    Thread _timeThread;
 	Thread _serviceThread;
 	bool _isDone=false;
 	Pupil.PupilData3D _pupilData;
@@ -167,12 +169,20 @@ public class PupilGazeTracker:MonoBehaviour
 	public float CanvasWidth = 640;
 	public float CanvasHeight=480;
 
+    // variables to test pupiltimestamp
+    DateTime _lastPT, startT;
+    float _lastPTf;
 
 	int _gazeFPS = 0;
 	int _currentFps = 0;
 	DateTime _lastT;
 
 	object _dataLock;
+
+    public double upTimeSec
+    {
+        get { return _globalTime.TotalSeconds; }
+    }
 
 	public int FPS
 	{
@@ -234,18 +244,29 @@ public class PupilGazeTracker:MonoBehaviour
 		leftEye = new EyeData (SamplesCount);
 		rightEye= new EyeData (SamplesCount);
 
+        startT = DateTime.Now;
+
 		_dataLock = new object ();
         
 		_serviceThread = new Thread(NetMQClient);
 		_serviceThread.Start();
 
+        _timeThread = new Thread(TimeClient);
+        _timeThread.Start();
 	}
-	void OnDestroy()
+
+    private void TimeClient()
+    {
+        _globalTime = DateTime.Now - startT;
+    }
+
+    void OnDestroy()
 	{
 		if (m_status == EStatus.Calibration)
 			StopCalibration ();
 		_isDone = true;
 		_serviceThread.Join();
+        _timeThread.Join();
 	}
 
 	NetMQMessage _sendRequestMessage(Dictionary<string,object> data)
@@ -279,8 +300,12 @@ public class PupilGazeTracker:MonoBehaviour
         DateTime sendTime = DateTime.Now;
         _requestSocket.SendFrame ("t");
 		NetMQMessage recievedMsg=_requestSocket.ReceiveMultipartMessage ();
-        Debug.Log(float.Parse(recievedMsg[0].ConvertToString()));
-		return new float[] { float.Parse(recievedMsg[0].ConvertToString()), (DateTime.Now.Ticks - sendTime.Ticks) / 2 };
+
+        Debug.Log("Difference:" + ((float.Parse(recievedMsg[0].ConvertToString()) - _lastPTf) - (DateTime.Now - _lastPT).TotalSeconds));
+        _lastPT = DateTime.Now;
+        _lastPTf = (float.Parse(recievedMsg[0].ConvertToString()));
+
+        return new float[] { float.Parse(recievedMsg[0].ConvertToString()), (DateTime.Now.Ticks - sendTime.Ticks) / 2 };
 	}
 
 	void NetMQClient()
@@ -441,7 +466,14 @@ public class PupilGazeTracker:MonoBehaviour
 			y = (float)data.norm_pos [1];
 			_eyePos.x = (leftEye.gaze.x + rightEye.gaze.x) * 0.5f;
 			_eyePos.y = (leftEye.gaze.y + rightEye.gaze.y) * 0.5f;
-			if (data.id == 1) {
+
+
+            //Debug.Log("Difference:" + ((data.timestamp - _lastPTf) - (DateTime.Now - _lastPT).TotalSeconds));
+            //_lastPT = DateTime.Now;
+            //_lastPTf = (float)data.timestamp;
+
+
+            if (data.id == 1) {
 				leftEye.AddGaze (x, y,GetPupilTimestamp()[1]);
 				if (OnEyeGaze != null)
 					OnEyeGaze (this);

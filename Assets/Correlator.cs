@@ -154,6 +154,7 @@ public class Correlator : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
+
         sceneObjects = new List<MovingObject>();
         gazeTrajectory = new MovingObject(null);
         activeObjects = new List<string>();
