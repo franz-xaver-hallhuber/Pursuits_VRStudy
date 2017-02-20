@@ -171,7 +171,8 @@ public class PupilGazeTracker:MonoBehaviour
 
     // variables to test pupiltimestamp
     DateTime _lastPT, startT;
-    float _lastPTf;
+    float _lastPTf, firstPTf;
+    double _currentPTf;
 
 	int _gazeFPS = 0;
 	int _currentFps = 0;
@@ -244,7 +245,7 @@ public class PupilGazeTracker:MonoBehaviour
 		leftEye = new EyeData (SamplesCount);
 		rightEye= new EyeData (SamplesCount);
 
-        startT = DateTime.Now;
+        
 
 		_dataLock = new object ();
         
@@ -257,7 +258,17 @@ public class PupilGazeTracker:MonoBehaviour
 
     private void TimeClient()
     {
-        _globalTime = DateTime.Now - startT;
+        while(!_isDone)
+        {
+            try
+            {
+                _globalTime = DateTime.Now - startT;
+            } catch
+            {
+                Debug.LogError("No start time set.");
+            }
+        }
+        
     }
 
     void OnDestroy()
@@ -294,18 +305,22 @@ public class PupilGazeTracker:MonoBehaviour
     /// Determines the current timestamp from Pupil capture and the round trip delay
     /// by taking half of the time it took from sending the request to receiving the reply
     /// </summary>
-    /// <returns>An array of length 2. [0] pupil timestamp [1] round trip delay</returns>
+    /// <returns>An array of length 2. [0] pupil timestamp [1] round trip delay in ticks [2] rtd in seconds [3] corrected timestamp</returns>
 	float[] GetPupilTimestamp()
 	{
         DateTime sendTime = DateTime.Now;
         _requestSocket.SendFrame ("t");
 		NetMQMessage recievedMsg=_requestSocket.ReceiveMultipartMessage ();
 
-        Debug.Log("Difference:" + ((float.Parse(recievedMsg[0].ConvertToString()) - _lastPTf) - (DateTime.Now - _lastPT).TotalSeconds));
-        _lastPT = DateTime.Now;
-        _lastPTf = (float.Parse(recievedMsg[0].ConvertToString()));
+        // Comparing time differences of pupil timestamps with local time differences
+        //Debug.Log("Difference:" + ((float.Parse(recievedMsg[0].ConvertToString()) - _lastPTf) - (DateTime.Now - _lastPT).TotalSeconds));
+        //_lastPT = DateTime.Now;
+        //_lastPTf = (float.Parse(recievedMsg[0].ConvertToString()));
 
-        return new float[] { float.Parse(recievedMsg[0].ConvertToString()), (DateTime.Now.Ticks - sendTime.Ticks) / 2 };
+        TimeSpan rtd = DateTime.Now - sendTime;
+        float ts = float.Parse(recievedMsg[0].ConvertToString());
+
+        return new float[] { ts, rtd.Ticks/2, (float)rtd.TotalSeconds/2, ts-(float)rtd.TotalSeconds/2};
 	}
 
 	void NetMQClient()
@@ -337,7 +352,12 @@ public class PupilGazeTracker:MonoBehaviour
 			subscriberSocket.Subscribe("notify."); //subscribe for all notifications
 			_setStatus(EStatus.ProcessingGaze);
 			var msg = new NetMQMessage();
-			while ( _isDone == false)
+
+            // set time counters
+            firstPTf = GetPupilTimestamp()[3]; // record first timestamp from pupil corrected by rtd/2
+            startT = DateTime.Now;
+
+            while ( _isDone == false)
 			{
 				_isconnected = subscriberSocket.TryReceiveMultipartMessage(timeout,ref(msg));
 				if (_isconnected)
@@ -352,6 +372,7 @@ public class PupilGazeTracker:MonoBehaviour
 							lock (_dataLock)
 							{
 								_pupilData = JsonUtility.FromJson<Pupil.PupilData3D>(mmap.ToString());
+                                _currentPTf = _pupilData.timestamp;
 								if(_pupilData.confidence>0.5f)
 								{
 									OnPacket(_pupilData);
@@ -467,18 +488,18 @@ public class PupilGazeTracker:MonoBehaviour
 			_eyePos.x = (leftEye.gaze.x + rightEye.gaze.x) * 0.5f;
 			_eyePos.y = (leftEye.gaze.y + rightEye.gaze.y) * 0.5f;
 
-
+            //Debug.Log("Time difference:" + (upTimeSec+firstPTf-data.timestamp-GetPupilTimestamp()[2]));
             //Debug.Log("Difference:" + ((data.timestamp - _lastPTf) - (DateTime.Now - _lastPT).TotalSeconds));
             //_lastPT = DateTime.Now;
             //_lastPTf = (float)data.timestamp;
 
-
+            // save x and y coordinates in Eye objects as well as the timestamp in local uptime
             if (data.id == 1) {
-				leftEye.AddGaze (x, y,GetPupilTimestamp()[1]);
+				leftEye.AddGaze (x, y, (float)data.timestamp - firstPTf);
 				if (OnEyeGaze != null)
 					OnEyeGaze (this);
 			} else if (data.id == 0) {
-				rightEye.AddGaze (x, y, GetPupilTimestamp()[1]);
+				rightEye.AddGaze (x, y, (float)data.timestamp - firstPTf);
 				if (OnEyeGaze != null)
 					OnEyeGaze (this);
 			}
@@ -528,6 +549,8 @@ public class PupilGazeTracker:MonoBehaviour
 		string str="Capture Rate="+FPS;
 		str += "\nLeft Eye:" + LeftEyePos.ToString ();
 		str += "\nRight Eye:" + RightEyePos.ToString ();
-		GUI.TextArea (new Rect (0, 0, 200, 50), str);
+        str += "\nUptime: " + upTimeSec;
+        str += "\nPupilTime:" + _currentPTf;
+		GUI.TextArea (new Rect (0, 0, 200, 80), str);
 	}
 }
