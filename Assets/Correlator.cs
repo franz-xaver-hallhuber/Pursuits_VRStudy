@@ -9,12 +9,12 @@ using System.IO;
 public class Correlator : MonoBehaviour {
     public class TimePoint
     {
-        public DateTime timestamp { get; set; }
+        public TimeSpan timestamp { get; set; }
         public Vector3 pos { get; set; }
 
-        public TimePoint(DateTime time, Vector3 currentPos)
+        public TimePoint(double time, Vector3 currentPos)
         {
-            this.timestamp = time;
+            this.timestamp = TimeSpan.FromSeconds(time);
             this.pos = currentPos;
         }
     }
@@ -35,7 +35,7 @@ public class Correlator : MonoBehaviour {
             if (go != null) name = go.name;
             else name = "gaze";
             positionWriter = new StreamWriter("log_" + name + "_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-            positionWriter.WriteLine(name+"Timestamp;"+name+"XPos");
+            positionWriter.WriteLine(name+"Timestamp;"+name+"XPos");            
         }
 
         public string getName()
@@ -51,9 +51,9 @@ public class Correlator : MonoBehaviour {
             //if (trajectory.Count > 120) trajectory.RemoveAt(0);
             if (trajectory.Count > 0)
             {
-                if ((DateTime.Now - trajectory[0].timestamp).TotalMilliseconds > Correlator.w) trajectory.RemoveAt(0);
+                if ((PupilGazeTracker.Instance._globalTime - trajectory[0].timestamp).TotalMilliseconds > Correlator.w) trajectory.RemoveAt(0);
                 if (trajectory.Count > 0)
-                    if ((DateTime.Now - trajectory[0].timestamp).TotalMilliseconds > Correlator.w) cleanUp();
+                    if ((PupilGazeTracker.Instance._globalTime - trajectory[0].timestamp).TotalMilliseconds > Correlator.w) cleanUp();
             }
             
         }
@@ -63,21 +63,21 @@ public class Correlator : MonoBehaviour {
         /// </summary>
         public void addNewPosition()
         {
-            trajectory.Add(new TimePoint(DateTime.Now, _current));
-            positionWriter.WriteLine((DateTime.Now - Correlator.startTime).TotalMilliseconds+ ";" + _current.x);
+            trajectory.Add(new TimePoint(PupilGazeTracker.Instance._globalTime.TotalSeconds, _current));
+            positionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + _current.x);
             cleanUp();
         }
 
         /// <summary>
         /// Interpolates between the last recorded position and the current position to determine the position at a given time
         /// </summary>
-        /// <param name="atTime">the timestamp for which the position should be calulated</param>
-        public void addNewPosition(DateTime atTime)
+        /// <param name="atTime">The timestamp for which the position should be calulated</param>
+        public void addNewPosition(float atTime)
         {
             if (trajectory.Count > 0)
             {
                 TimePoint _last = trajectory[trajectory.Count - 1];
-                float scale = (float)((atTime - _last.timestamp).TotalMilliseconds / (DateTime.Now - _last.timestamp).TotalMilliseconds);
+                float scale = (float)((atTime - _last.timestamp.TotalSeconds) / (PupilGazeTracker.Instance._globalTime - _last.timestamp).TotalSeconds);
                 trajectory.Add(new TimePoint(atTime, _current + Vector3.Scale(_current - _last.pos, new Vector3(scale, scale, scale))));
             } else
             {
@@ -94,7 +94,7 @@ public class Correlator : MonoBehaviour {
             _current = go.transform.localPosition;
         }
 
-        public void addNewGaze(DateTime timeOfCapture, Vector3 gazePoint)
+        public void addNewGaze(float timeOfCapture, Vector3 gazePoint)
         {
             trajectory.Add(new TimePoint(timeOfCapture, gazePoint));
             positionWriter.WriteLine(timeOfCapture + ";" + gazePoint.x);
@@ -193,14 +193,14 @@ public class Correlator : MonoBehaviour {
     /// <param name="manager"></param>
     void UpdateTrajectories(PupilGazeTracker manager)
     {
-        // receive new gaze point
+        // receive new gaze point. z.Value already is the corrected timestamp
         Vector3 newgaze = PupilGazeTracker.Instance.GetEyeGaze(Gaze);
         // calculate the time at which the gaze was probably recorded
-        DateTime _correctedTs = new DateTime(DateTime.Now.Ticks - (long)newgaze.z);
+        //DateTime _correctedTs = new DateTime(DateTime.Now.Ticks - (long)newgaze.z);
         // add new gaze point to the trajectory
-        gazeTrajectory.addNewGaze(_correctedTs, newgaze);
+        gazeTrajectory.addNewGaze(newgaze.z, newgaze);
         // add positions at the moment of _correctedTs to all MovingObjects' trajectories
-        foreach (MovingObject mo in sceneObjects) mo.addNewPosition(_correctedTs);
+        foreach (MovingObject mo in sceneObjects) mo.addNewPosition(newgaze.z);
         //Debug.Log("New Gaze");
     }
 

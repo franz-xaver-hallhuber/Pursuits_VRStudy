@@ -79,26 +79,27 @@ public class PupilGazeTracker:MonoBehaviour
 	}
 	class MovingAverage
 	{
-		List<float> samples=new List<float>();
-		int length=5;
+        List<float> samples = new List<float>();
+        int length = 5;
 
-		public MovingAverage(int len)
-		{
-			length=len;
-		}
-		public float AddSample(float v)
-		{
-			samples.Add (v);
-			while (samples.Count > length) {
-				samples.RemoveAt (0);
-			}
-			float s = 0;
-			for (int i = 0; i < samples.Count; ++i)
-				s += samples [i];
+        public MovingAverage(int len)
+        {
+            length = len;
+        }
+        public float AddSample(float v)
+        {
+            samples.Add(v);
+            while (samples.Count > length)
+            {
+                samples.RemoveAt(0);
+            }
+            float s = 0;
+            for (int i = 0; i < samples.Count; ++i)
+                s += samples[i];
 
-			return s / (float)samples.Count;
+            return s / (float)samples.Count;
 
-		}
+        }
 	}
 	class EyeData
 	{
@@ -118,7 +119,7 @@ public class PupilGazeTracker:MonoBehaviour
 			gaze.y = yavg.AddSample (y);
             gaze.z = ts;
             lastTimeStamp = ts;
-			return new Vector3(gaze.x,gaze.y,lastTimeStamp); //use z-component of Vector to transfer timestamp
+            return new Vector3(gaze.x, gaze.y, lastTimeStamp); //use z-component of Vector to transfer timestamp
 		}
 	}
 	EyeData leftEye;
@@ -131,13 +132,13 @@ public class PupilGazeTracker:MonoBehaviour
 
     Thread _timeThread;
 	Thread _serviceThread;
-	bool _isDone=false;
+    bool _isDone = false;
 	Pupil.PupilData3D _pupilData;
 
 	public delegate void OnCalibrationStartedDeleg(PupilGazeTracker manager);
 	public delegate void OnCalibrationDoneDeleg(PupilGazeTracker manager);
 	public delegate void OnEyeGazeDeleg(PupilGazeTracker manager);
-	public delegate void OnCalibDataDeleg(PupilGazeTracker manager,float x,float y);
+    public delegate void OnCalibDataDeleg(PupilGazeTracker manager, float x, float y);
 
 	public event OnCalibrationStartedDeleg OnCalibrationStarted;
 	public event OnCalibrationDoneDeleg OnCalibrationDone;
@@ -145,33 +146,33 @@ public class PupilGazeTracker:MonoBehaviour
 	public event OnCalibDataDeleg OnCalibData;
 
 
-	bool _isconnected =false;
-	RequestSocket _requestSocket ;
+    bool _isconnected = false;
+	RequestSocket _requestSocket;
 
-	List<Dictionary<string,object>> _calibrationData=new List<Dictionary<string,object>>();
+    List<Dictionary<string, object>> _calibrationData = new List<Dictionary<string, object>>();
 
 	[SerializeField]
 	Dictionary<string,object>[] _CalibrationPoints
 	{
-		get{ return _calibrationData.ToArray (); }
+		get { return _calibrationData.ToArray(); }
 	}
 
 
 	Vector2[] _calibPoints;
 	int _calibSamples;
-	int _currCalibPoint=0;
-	int _currCalibSamples=0;
+    int _currCalibPoint = 0;
+    int _currCalibSamples = 0;
 
-	public string ServerIP="";
-	public int ServicePort=50020;
-	public int DefaultCalibrationCount=120;
-	public int SamplesCount=4;
+    public string ServerIP = "";
+    public int ServicePort = 50020;
+    public int DefaultCalibrationCount = 120;
+    public int SamplesCount = 4;
 	public float CanvasWidth = 640;
-	public float CanvasHeight=480;
+	public float CanvasHeight = 480;
 
-    // variables to test pupiltimestamp
+    
     DateTime _lastPT, startT;
-    float _lastPTf, firstPTf;
+    float _lastPTf, startPTf;
     double _currentPTf;
 
 	int _gazeFPS = 0;
@@ -244,9 +245,7 @@ public class PupilGazeTracker:MonoBehaviour
 			PupilGazeTracker._Instance = this;
 		leftEye = new EyeData (SamplesCount);
 		rightEye= new EyeData (SamplesCount);
-
         
-
 		_dataLock = new object ();
         
 		_serviceThread = new Thread(NetMQClient);
@@ -354,7 +353,7 @@ public class PupilGazeTracker:MonoBehaviour
 			var msg = new NetMQMessage();
 
             // set time counters
-            firstPTf = GetPupilTimestamp()[3]; // record first timestamp from pupil corrected by rtd/2
+            startPTf = GetPupilTimestamp()[3]; // record first timestamp from pupil corrected by rtd/2
             startT = DateTime.Now;
 
             while ( _isDone == false)
@@ -423,7 +422,7 @@ public class PupilGazeTracker:MonoBehaviour
 
 	public void StartProcess()
 	{
-		_sendRequestMessage (new Dictionary<string,object> {{"subject","eye_process.should_start.0"},{"eye_id",0}});
+		_sendRequestMessage ( new Dictionary<string,object> {{"subject","eye_process.should_start.0"},{"eye_id",0}});
 		_sendRequestMessage ( new Dictionary<string,object> {{"subject","eye_process.should_start.1"},{"eye_id",1}});
 	}
 	public void StopProcess()
@@ -495,11 +494,11 @@ public class PupilGazeTracker:MonoBehaviour
 
             // save x and y coordinates in Eye objects as well as the timestamp in local uptime
             if (data.id == 1) {
-				leftEye.AddGaze (x, y, (float)data.timestamp - firstPTf);
+				leftEye.AddGaze (x, y, (float)data.timestamp - startPTf);
 				if (OnEyeGaze != null)
 					OnEyeGaze (this);
 			} else if (data.id == 0) {
-				rightEye.AddGaze (x, y, (float)data.timestamp - firstPTf);
+				rightEye.AddGaze (x, y, (float)data.timestamp - startPTf);
 				if (OnEyeGaze != null)
 					OnEyeGaze (this);
 			}
