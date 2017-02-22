@@ -353,9 +353,8 @@ public class PupilGazeTracker:MonoBehaviour
 			var msg = new NetMQMessage();
 
             // set time counters
-            float[] _tVals = GetPupilTimestamp();
-            startT = DateTime.Now - TimeSpan.FromSeconds(_tVals[2]); // record corresponding value in local time
-            startPTf = _tVals[0]; // record timestamp from pupil
+            startT = DateTime.Now; // record corresponding value in local time
+            startPTf = GetPupilTimestamp()[0]; // record timestamp from pupil
 
             while ( _isDone == false)
 			{
@@ -495,11 +494,11 @@ public class PupilGazeTracker:MonoBehaviour
 
             // save x and y coordinates in Eye objects as well as the timestamp the packet was sent in local uptime
             if (data.id == 1) {
-				leftEye.AddGaze (x, y, (float)data.timestamp - startPTf);
+				leftEye.AddGaze (x, y, GetPupilTimestamp()[2]);
 				if (OnEyeGaze != null)
 					OnEyeGaze (this);
 			} else if (data.id == 0) {
-				rightEye.AddGaze (x, y, (float)data.timestamp - startPTf);
+				rightEye.AddGaze (x, y, GetPupilTimestamp()[2]);
 				if (OnEyeGaze != null)
 					OnEyeGaze (this);
 			}

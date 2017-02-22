@@ -51,11 +51,12 @@ public class Correlator : MonoBehaviour {
             //if (trajectory.Count > 120) trajectory.RemoveAt(0);
             if (trajectory.Count > 0)
             {
-                if ((PupilGazeTracker.Instance._globalTime - trajectory[0].timestamp).TotalMilliseconds > Correlator.w) trajectory.RemoveAt(0);
-                if (trajectory.Count > 0)
-                    if ((PupilGazeTracker.Instance._globalTime - trajectory[0].timestamp).TotalMilliseconds > Correlator.w) cleanUp();
+                if ((PupilGazeTracker.Instance._globalTime - trajectory[0].timestamp).TotalMilliseconds > Correlator.w)
+                {
+                    trajectory.RemoveAt(0);
+                    cleanUp();
+                }
             }
-            
         }
 
         /// <summary>
@@ -69,16 +70,27 @@ public class Correlator : MonoBehaviour {
         }
 
         /// <summary>
+        /// Get current timestamp from PupilGazeTracker
+        /// </summary>
+        /// <returns>Current Global Timestamp</returns>
+        private double now()
+        {
+            return PupilGazeTracker.Instance._globalTime.TotalSeconds;
+        }
+
+        /// <summary>
         /// Interpolates between the last recorded position and the current position to determine the position at a given time
         /// </summary>
-        /// <param name="atTime">The timestamp for which the position should be calulated</param>
-        public void addNewPosition(float atTime)
+        /// <param name="timeDelay">The time delay it took to transfer the gaze data</param>
+        public void addNewPosition(float timeDelay)
         {
             if (trajectory.Count > 0)
             {
+                double n = now();
                 TimePoint _last = trajectory[trajectory.Count - 1];
-                float scale = (float)((atTime - _last.timestamp.TotalSeconds) / (PupilGazeTracker.Instance._globalTime - _last.timestamp).TotalSeconds);
-                trajectory.Add(new TimePoint(atTime, _current + Vector3.Scale(_current - _last.pos, new Vector3(scale, scale, scale))));
+                float scale = (float)((n - timeDelay - _last.timestamp.TotalSeconds) / (n - _last.timestamp.TotalSeconds));
+                trajectory.Add(new TimePoint(n, _current + Vector3.Scale(_current - _last.pos, new Vector3(scale, scale, scale))));
+                cleanUp();
             } else
             {
                 // in case trajectory is empty
@@ -94,10 +106,10 @@ public class Correlator : MonoBehaviour {
             _current = go.transform.localPosition;
         }
 
-        public void addNewGaze(float timeOfCapture, Vector3 gazePoint)
+        public void addNewGaze(float timeDelay, Vector3 gazePoint)
         {
-            trajectory.Add(new TimePoint(timeOfCapture, gazePoint));
-            positionWriter.WriteLine(timeOfCapture + ";" + gazePoint.x);
+            trajectory.Add(new TimePoint(PupilGazeTracker.Instance._globalTime.TotalSeconds - timeDelay, gazePoint));
+            positionWriter.WriteLine(timeDelay + ";" + gazePoint.x);
             cleanUp();
         }
 
@@ -241,22 +253,9 @@ public class Correlator : MonoBehaviour {
                 }
                 
             }
-            yield return new WaitForSeconds(0.005f); //wait for x seconds before the next correlation
+            yield return new WaitForSeconds(0.005f); //wait for x seconds before the next calculation
         }
     }
-
-    //IEnumerator CheckForResult()
-    //{
-    //    while(true)
-    //    {
-    //        foreach (MovingObject mo in sceneObjects)
-    //        {
-    //            if (activeObjects.Contains(mo.getName())) mo.activate(true);
-    //            else mo.activate(false);
-    //            yield return null;
-    //        }
-    //    }
-    //}
 
     private void OnDestroy()
     {
@@ -264,5 +263,15 @@ public class Correlator : MonoBehaviour {
         foreach (MovingObject mo in sceneObjects) mo.killMe();
         correlationWriter.Close();
         gazeTrajectory.killMe();
+    }
+
+    private void OnGUI()
+    {
+        if (sceneObjects.Count > 0)
+        {
+            string str = "Watched Objects=" + sceneObjects.Count;
+            str += "\nTraj. Length:" + sceneObjects[0].trajectory.Count;
+            GUI.TextArea(new Rect(200, 0, 200, 80), str);
+        }
     }
 }
