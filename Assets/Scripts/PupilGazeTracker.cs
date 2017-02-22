@@ -304,12 +304,12 @@ public class PupilGazeTracker:MonoBehaviour
     /// Determines the current timestamp from Pupil capture and the round trip delay
     /// by taking half of the time it took from sending the request to receiving the reply
     /// </summary>
-    /// <returns>An array of length 2. [0] pupil timestamp [1] round trip delay in ticks [2] rtd in seconds [3] corrected timestamp</returns>
+    /// <returns>An array of length 2. [0] pupil timestamp [1] round trip delay/2 in ticks [2] rtd/2 in seconds [3] curent time minus rtd/2</returns>
 	float[] GetPupilTimestamp()
 	{
         DateTime sendTime = DateTime.Now;
         _requestSocket.SendFrame ("t");
-		NetMQMessage recievedMsg=_requestSocket.ReceiveMultipartMessage ();
+		NetMQMessage recievedMsg=_requestSocket.ReceiveMultipartMessage (); // blocks until message is received
 
         // Comparing time differences of pupil timestamps with local time differences
         //Debug.Log("Difference:" + ((float.Parse(recievedMsg[0].ConvertToString()) - _lastPTf) - (DateTime.Now - _lastPT).TotalSeconds));
@@ -319,7 +319,7 @@ public class PupilGazeTracker:MonoBehaviour
         TimeSpan rtd = DateTime.Now - sendTime;
         float ts = float.Parse(recievedMsg[0].ConvertToString());
 
-        return new float[] { ts, rtd.Ticks/2, (float)rtd.TotalSeconds/2, ts-(float)rtd.TotalSeconds/2};
+        return new float[] { ts, rtd.Ticks/2, (float)rtd.TotalSeconds/2, (float)(_globalTime.TotalSeconds-rtd.TotalSeconds/2)};
 	}
 
 	void NetMQClient()
@@ -353,8 +353,9 @@ public class PupilGazeTracker:MonoBehaviour
 			var msg = new NetMQMessage();
 
             // set time counters
-            startPTf = GetPupilTimestamp()[3]; // record first timestamp from pupil corrected by rtd/2
-            startT = DateTime.Now;
+            float[] _tVals = GetPupilTimestamp();
+            startT = DateTime.Now - TimeSpan.FromSeconds(_tVals[2]); // record corresponding value in local time
+            startPTf = _tVals[0]; // record timestamp from pupil
 
             while ( _isDone == false)
 			{
@@ -492,7 +493,7 @@ public class PupilGazeTracker:MonoBehaviour
             //_lastPT = DateTime.Now;
             //_lastPTf = (float)data.timestamp;
 
-            // save x and y coordinates in Eye objects as well as the timestamp in local uptime
+            // save x and y coordinates in Eye objects as well as the timestamp the packet was sent in local uptime
             if (data.id == 1) {
 				leftEye.AddGaze (x, y, (float)data.timestamp - startPTf);
 				if (OnEyeGaze != null)
