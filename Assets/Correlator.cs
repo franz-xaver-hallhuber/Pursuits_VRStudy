@@ -46,15 +46,15 @@ public class Correlator : MonoBehaviour {
         /// <summary>
         /// if the oldest timestamp was more than w ticks ago, remove the oldest
         /// </summary>
-        void cleanUp()
+        void cleanUp(int w)
         {
             //if (trajectory.Count > 120) trajectory.RemoveAt(0);
             if (trajectory.Count > 0)
             {
-                if ((PupilGazeTracker.Instance._globalTime - trajectory[0].timestamp).TotalMilliseconds > Correlator.w)
+                if ((PupilGazeTracker.Instance._globalTime - trajectory[0].timestamp).TotalMilliseconds > w)
                 {
                     trajectory.RemoveAt(0);
-                    cleanUp();
+                    cleanUp(w);
                 }
             }
         }
@@ -62,11 +62,10 @@ public class Correlator : MonoBehaviour {
         /// <summary>
         /// Adds the current position of a MovingObject to its trajectory
         /// </summary>
-        public void addNewPosition()
+        public void addNewPosition(int w)
         {
             trajectory.Add(new TimePoint(PupilGazeTracker.Instance._globalTime.TotalSeconds, _current));
-            positionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + _current.x);
-            cleanUp();
+            cleanUp(w);
         }
 
         /// <summary>
@@ -82,7 +81,7 @@ public class Correlator : MonoBehaviour {
         /// Interpolates between the last recorded position and the current position to determine the position at a given time
         /// </summary>
         /// <param name="timeDelay">The time delay it took to transfer the gaze data</param>
-        public void addNewPosition(float timeDelay)
+        public void addNewPosition(float timeDelay, int w)
         {
             if (trajectory.Count > 0)
             {
@@ -90,11 +89,12 @@ public class Correlator : MonoBehaviour {
                 TimePoint _last = trajectory[trajectory.Count - 1];
                 float scale = (float)((n - timeDelay - _last.timestamp.TotalSeconds) / (n - _last.timestamp.TotalSeconds));
                 trajectory.Add(new TimePoint(n, _current + Vector3.Scale(_current - _last.pos, new Vector3(scale, scale, scale))));
-                cleanUp();
+                positionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + _current.x);
+                cleanUp(w);
             } else
             {
                 // in case trajectory is empty
-                addNewPosition();
+                addNewPosition(w);
             }
         }
 
@@ -106,11 +106,12 @@ public class Correlator : MonoBehaviour {
             _current = go.transform.localPosition;
         }
 
-        public void addNewGaze(float timeDelay, Vector3 gazePoint)
+        public void addNewGaze(float timeDelay, Vector3 gazePoint, int w)
         {
-            trajectory.Add(new TimePoint(PupilGazeTracker.Instance._globalTime.TotalSeconds - timeDelay, gazePoint));
-            positionWriter.WriteLine(timeDelay + ";" + gazePoint.x);
-            cleanUp();
+            TimePoint tp = new TimePoint(PupilGazeTracker.Instance._globalTime.TotalSeconds - timeDelay, gazePoint);
+            trajectory.Add(tp);
+            positionWriter.WriteLine(tp.timestamp.TotalSeconds + ";" + gazePoint.x);
+            cleanUp(w);
         }
 
         public List<double> getXPoints()
@@ -150,14 +151,13 @@ public class Correlator : MonoBehaviour {
     public PupilGazeTracker.GazeSource Gaze;
     List<string> activeObjects;
 
-    public static long w;
-    public float correlationDurationMs;
+    public int w;
 
     private volatile bool _shouldStop;
     
     private StreamWriter correlationWriter;
 
-    private bool _calcInProgress;
+    //private bool _calcInProgress;
 
     public static DateTime startTime;
 
@@ -175,9 +175,6 @@ public class Correlator : MonoBehaviour {
 
         // search for objects tagged 'Trackable' and add them to the list
         foreach (GameObject go in GameObject.FindGameObjectsWithTag("Trackable")) register(go);
-
-        // set time window for the correlation
-        w = (long)(correlationDurationMs * Math.Pow(10, 6)); //ms to ns
 
         PupilGazeTracker.OnEyeGaze += new PupilGazeTracker.OnEyeGazeDeleg(UpdateTrajectories);
         startTime = DateTime.Now;
@@ -210,9 +207,9 @@ public class Correlator : MonoBehaviour {
         // calculate the time at which the gaze was probably recorded
         //DateTime _correctedTs = new DateTime(DateTime.Now.Ticks - (long)newgaze.z);
         // add new gaze point to the trajectory
-        gazeTrajectory.addNewGaze(newgaze.z, newgaze);
+        gazeTrajectory.addNewGaze(newgaze.z, newgaze, w);
         // add positions at the moment of _correctedTs to all MovingObjects' trajectories
-        foreach (MovingObject mo in sceneObjects) mo.addNewPosition(newgaze.z);
+        foreach (MovingObject mo in sceneObjects) mo.addNewPosition(newgaze.z, w);
         //Debug.Log("New Gaze");
     }
 
@@ -243,11 +240,11 @@ public class Correlator : MonoBehaviour {
                     nenner = Math.Sqrt(nenner);
                     coeff = zaehler / nenner;
 
-                    correlationWriter.WriteLine(mo.name + ";" + (DateTime.Now-startTime).TotalMilliseconds + ";" + coeff + ";" + (DateTime.Now-calcTime).TotalMilliseconds);
+                    correlationWriter.WriteLine(mo.name + ";" + PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + coeff + ";" + (DateTime.Now-calcTime).TotalSeconds);
 
                     if (coeff > 0.5) mo.activate(true);
                     else mo.activate(false);
-                } catch (IndexOutOfRangeException ie)
+                } catch
                 {
                     Debug.LogError("Out of bounds");
                 }
