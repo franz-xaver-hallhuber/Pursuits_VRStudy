@@ -19,7 +19,7 @@ public class Correlator : MonoBehaviour {
         }
     }
 
-    public class MovingObject
+    public class MovingObject : ICloneable
     {
         GameObject go;
         private StreamWriter positionWriter;
@@ -144,6 +144,13 @@ public class Correlator : MonoBehaviour {
         {
             positionWriter.Close();
         }
+
+        public object Clone()
+        {
+            MovingObject newMo = (MovingObject) this.MemberwiseClone();
+            newMo.trajectory = new List<TimePoint>(this.trajectory);
+            return newMo;
+        }
     }
 
     List<MovingObject> sceneObjects;
@@ -155,9 +162,9 @@ public class Correlator : MonoBehaviour {
 
     private volatile bool _shouldStop;
     
-    private StreamWriter correlationWriter;
+    private StreamWriter correlationWriter, trajectoryWriter;
 
-    //private bool _calcInProgress;
+    private bool _calcInProgress;
 
     public static DateTime startTime;
 
@@ -171,7 +178,9 @@ public class Correlator : MonoBehaviour {
         gazeTrajectory = new MovingObject(null);
         activeObjects = new List<string>();
         correlationWriter = new StreamWriter("log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+        trajectoryWriter = new StreamWriter("log_Trajectories_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         correlationWriter.WriteLine("Gameobject;Timestamp;r;t");
+        trajectoryWriter.WriteLine("Gameobject;TimestampList;TimestampPoint;x");
 
         // search for objects tagged 'Trackable' and add them to the list
         foreach (GameObject go in GameObject.FindGameObjectsWithTag("Trackable")) register(go);
@@ -218,37 +227,50 @@ public class Correlator : MonoBehaviour {
     {
         while (!_shouldStop)
         {
-            DateTime calcTime;
-            MovingObject[] _tempObjects = new MovingObject[sceneObjects.Count];
-            sceneObjects.CopyTo(_tempObjects); //work on a copy to (hopefully) improve performance
-            //List<MovingObject> _tempObjects = sceneObjects.; 
-            MovingObject _tempGaze = gazeTrajectory;
+            double calcTime;
+
+            List<MovingObject> _tempObjects = new List<MovingObject>();
+            foreach (MovingObject mo in sceneObjects) _tempObjects.Add((MovingObject)mo.Clone()); //work on a copy to (hopefully) improve performance
+
+            MovingObject _tempGaze = (MovingObject) gazeTrajectory.Clone();
+            List<double> _tempXPgaze = new List<double>(_tempGaze.getXPoints());
 
             foreach (MovingObject mo in _tempObjects)
             {
                 try
                 {
-                    calcTime = DateTime.Now;
+                    calcTime = PupilGazeTracker.Instance._globalTime.TotalSeconds;
                     double zaehler = 0, nenner = 0, nenner1 = 0, nenner2 = 0, coeff = 0;
-                    for (int i = 0; i < Math.Min(gazeTrajectory.length(), mo.length()); i++)
+
+                    // temporary list for not having to generate a new one at every loop
+                    List<double> _tempXPObj = new List<double>(mo.getXPoints());                    
+
+                    _calcInProgress = true;
+                    for (int i = 0; i < Math.Min(_tempGaze.length(), mo.length()); i++)
                     {
-                        zaehler += (gazeTrajectory.getXPoints()[i] - gazeTrajectory.getXPoints().Average()) * (mo.getXPoints()[i] - mo.getXPoints().Average());
-                        nenner1 += Math.Pow((gazeTrajectory.getXPoints()[i] - gazeTrajectory.getXPoints().Average()), 2);
-                        nenner2 += Math.Pow((mo.getXPoints()[i] - mo.getXPoints().Average()), 2);
+                        zaehler += (_tempXPgaze[i] - _tempXPgaze.Average()) * (_tempXPObj[i] - _tempXPObj.Average());
+                        nenner1 += Math.Pow((_tempXPgaze[i] - _tempXPgaze.Average()), 2);
+                        nenner2 += Math.Pow((_tempXPObj[i] - _tempXPObj.Average()), 2);
+                        // Gameobject; TimestampList; TimestampPoint ; x
+                        trajectoryWriter.WriteLine(mo.name + ";" + calcTime + ";" + mo.trajectory[i].timestamp.TotalSeconds + ";" +  mo.trajectory[i].pos.x);
+                        trajectoryWriter.WriteLine("gaze;" + calcTime + ";" + _tempGaze.trajectory[i].timestamp.TotalSeconds + ";" + _tempGaze.trajectory[i].pos.x); // remove when >1 objects in the scene
                     }
+                    _calcInProgress = false;
                     nenner = nenner1 * nenner2;
                     nenner = Math.Sqrt(nenner);
                     coeff = zaehler / nenner;
+                    correlationWriter.WriteLine(mo.name + ";" + PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + coeff + ";" + (PupilGazeTracker.Instance._globalTime.TotalSeconds - calcTime));
 
-                    correlationWriter.WriteLine(mo.name + ";" + PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + coeff + ";" + (DateTime.Now-calcTime).TotalSeconds);
-
-                    if (coeff > 0.5) mo.activate(true);
-                    else mo.activate(false);
-                } catch
-                {
-                    Debug.LogError("Out of bounds");
+                    if (coeff > 0.5)
+                        mo.activate(true);
+                    else
+                        mo.activate(false);
                 }
-                
+                catch (Exception e)
+                {
+                    Debug.LogError("Out of bounds:" + e.StackTrace);
+                }
+
             }
             yield return new WaitForSeconds(0.005f); //wait for x seconds before the next calculation
         }
@@ -260,6 +282,7 @@ public class Correlator : MonoBehaviour {
         foreach (MovingObject mo in sceneObjects) mo.killMe();
         correlationWriter.Close();
         gazeTrajectory.killMe();
+        trajectoryWriter.Close();
     }
 
     private void OnGUI()
