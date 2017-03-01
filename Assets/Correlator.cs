@@ -27,7 +27,7 @@ public class Correlator : MonoBehaviour {
 
         public string name { get; set; }
         public List<TimePoint> trajectory { get; set; }
-        
+
         public MovingObject(GameObject go)
         {
             this.go = go;
@@ -35,9 +35,10 @@ public class Correlator : MonoBehaviour {
             if (go != null) name = go.name;
             else name = "gaze";
             positionWriter = new StreamWriter("log_" + name + "_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-            positionWriter.WriteLine(name+"Timestamp;"+name+"XPos");            
-        }
+            positionWriter.WriteLine(name+"Timestamp;"+name+"XPos");
+            //positionWriter.WriteLine("nowTS;nowX;lastTS;lastX;pupilTS;scale");
 
+        }
         public string getName()
         {
             return go.name;
@@ -88,8 +89,11 @@ public class Correlator : MonoBehaviour {
                 double n = now();
                 TimePoint _last = trajectory[trajectory.Count - 1];
                 float scale = (float)((n - timeDelay - _last.timestamp.TotalSeconds) / (n - _last.timestamp.TotalSeconds));
-                trajectory.Add(new TimePoint(n, _current + Vector3.Scale(_current - _last.pos, new Vector3(scale, scale, scale))));
-                positionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + _current.x);
+                Vector3 _correctedPos = (_last.pos + Vector3.Scale(_current - _last.pos, new Vector3(scale, scale, scale)));
+                trajectory.Add(new TimePoint(n-timeDelay, _correctedPos));
+                // nowTS;nowX;lastTS;lastX;pupilTS;scale
+                positionWriter.WriteLine(n - timeDelay + ";" + _correctedPos.x);
+                //positionWriter.WriteLine(n + ";" + _current.x + ";" + _last.timestamp.TotalSeconds + ";" + _last.pos.x + ";" + timeDelay + ";" + scale);
                 cleanUp(w);
             } else
             {
@@ -167,6 +171,7 @@ public class Correlator : MonoBehaviour {
     private bool _calcInProgress;
 
     public static DateTime startTime;
+    public double pearsonThreshold = 0.8;
 
     //public delegate void GazeAction();
     //public static event GazeAction OnNewGaze;
@@ -180,7 +185,7 @@ public class Correlator : MonoBehaviour {
         correlationWriter = new StreamWriter("log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         trajectoryWriter = new StreamWriter("log_Trajectories_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         correlationWriter.WriteLine("Gameobject;Timestamp;r;t");
-        trajectoryWriter.WriteLine("Gameobject;TimestampList;TimestampPoint;x");
+        trajectoryWriter.WriteLine("Timestamp;xCube;xGaze;r");
 
         // search for objects tagged 'Trackable' and add them to the list
         foreach (GameObject go in GameObject.FindGameObjectsWithTag("Trackable")) register(go);
@@ -252,16 +257,16 @@ public class Correlator : MonoBehaviour {
                         nenner1 += Math.Pow((_tempXPgaze[i] - _tempXPgaze.Average()), 2);
                         nenner2 += Math.Pow((_tempXPObj[i] - _tempXPObj.Average()), 2);
                         // Gameobject; TimestampList; TimestampPoint ; x
-                        trajectoryWriter.WriteLine(mo.name + ";" + calcTime + ";" + mo.trajectory[i].timestamp.TotalSeconds + ";" +  mo.trajectory[i].pos.x);
-                        trajectoryWriter.WriteLine("gaze;" + calcTime + ";" + _tempGaze.trajectory[i].timestamp.TotalSeconds + ";" + _tempGaze.trajectory[i].pos.x); // remove when >1 objects in the scene
+                        trajectoryWriter.WriteLine(mo.trajectory[i].timestamp.TotalSeconds + ";" +  mo.trajectory[i].pos.x + ";;");
+                        trajectoryWriter.WriteLine(_tempGaze.trajectory[i].timestamp.TotalSeconds + ";;" + _tempGaze.trajectory[i].pos.x + ";"); // remove when >1 objects in the scene
                     }
                     _calcInProgress = false;
                     nenner = nenner1 * nenner2;
                     nenner = Math.Sqrt(nenner);
                     coeff = zaehler / nenner;
                     correlationWriter.WriteLine(mo.name + ";" + PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + coeff + ";" + (PupilGazeTracker.Instance._globalTime.TotalSeconds - calcTime));
-
-                    if (coeff > 0.5)
+                    trajectoryWriter.WriteLine(calcTime + ";;;" + coeff);
+                    if (coeff > pearsonThreshold)
                         mo.activate(true);
                     else
                         mo.activate(false);
@@ -272,7 +277,7 @@ public class Correlator : MonoBehaviour {
                 }
 
             }
-            yield return new WaitForSeconds(0.005f); //wait for x seconds before the next calculation
+            yield return new WaitForSeconds(0.45f); //wait for x seconds before the next calculation
         }
     }
 
