@@ -184,8 +184,8 @@ public class Correlator : MonoBehaviour {
         activeObjects = new List<string>();
         correlationWriter = new StreamWriter("log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         trajectoryWriter = new StreamWriter("log_Trajectories_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-        correlationWriter.WriteLine("Gameobject;Timestamp;r;t");
-        trajectoryWriter.WriteLine("Timestamp;xCube;xGaze;r");
+        correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;t");
+        //trajectoryWriter.WriteLine("Timestamp;xCube;xGaze;r");
 
         // search for objects tagged 'Trackable' and add them to the list
         foreach (GameObject go in GameObject.FindGameObjectsWithTag("Trackable")) register(go);
@@ -223,7 +223,8 @@ public class Correlator : MonoBehaviour {
         // add new gaze point to the trajectory
         gazeTrajectory.addNewGaze(newgaze.z, newgaze, w);
         // add positions at the moment of _correctedTs to all MovingObjects' trajectories
-        foreach (MovingObject mo in sceneObjects) mo.addNewPosition(newgaze.z, w);
+        foreach (MovingObject mo in sceneObjects)
+            mo.addNewPosition(newgaze.z, w);
         //Debug.Log("New Gaze");
     }
 
@@ -239,37 +240,62 @@ public class Correlator : MonoBehaviour {
 
             MovingObject _tempGaze = (MovingObject) gazeTrajectory.Clone();
             List<double> _tempXPgaze = new List<double>(_tempGaze.getXPoints());
+            List<double> _tempYPgaze = new List<double>(_tempGaze.getYPoints());
 
             foreach (MovingObject mo in _tempObjects)
             {
+                calcTime = PupilGazeTracker.Instance._globalTime.TotalSeconds;
+                double zaehlerX = 0, nennerX = 0, nenner1X = 0, nenner2X = 0, coeffX = 0;
+                double zaehlerY = 0, nennerY = 0, nenner1Y = 0, nenner2Y = 0, coeffY = 0;
+
+                // temporary list for not having to generate a new one at every loop
+                List<double> _tempXPObj = new List<double>(mo.getXPoints());
+                List<double> _tempYPObj = new List<double>(mo.getYPoints());
+
                 try
                 {
-                    calcTime = PupilGazeTracker.Instance._globalTime.TotalSeconds;
-                    double zaehler = 0, nenner = 0, nenner1 = 0, nenner2 = 0, coeff = 0;
-
-                    // temporary list for not having to generate a new one at every loop
-                    List<double> _tempXPObj = new List<double>(mo.getXPoints());                    
-
                     _calcInProgress = true;
                     for (int i = 0; i < Math.Min(_tempGaze.length(), mo.length()); i++)
                     {
-                        zaehler += (_tempXPgaze[i] - _tempXPgaze.Average()) * (_tempXPObj[i] - _tempXPObj.Average());
-                        nenner1 += Math.Pow((_tempXPgaze[i] - _tempXPgaze.Average()), 2);
-                        nenner2 += Math.Pow((_tempXPObj[i] - _tempXPObj.Average()), 2);
+                        // x correlation
+                        zaehlerX += (_tempXPgaze[i] - _tempXPgaze.Average()) * (_tempXPObj[i] - _tempXPObj.Average()); // (_tempXPObj[i] - _tempXPObj.Average() is 0 when object is only moving along x-axis
+                        nenner1X += Math.Pow((_tempXPgaze[i] - _tempXPgaze.Average()), 2);
+                        nenner2X += Math.Pow((_tempXPObj[i] - _tempXPObj.Average()), 2);
+
+                        //y correlation
+                        zaehlerY += (_tempYPgaze[i] - _tempYPgaze.Average()) * (_tempYPObj[i] - _tempYPObj.Average());
+                        nenner1Y += Math.Pow((_tempYPgaze[i] - _tempYPgaze.Average()), 2);
+                        nenner2Y += Math.Pow((_tempYPObj[i] - _tempYPObj.Average()), 2);
+
                         // Gameobject; TimestampList; TimestampPoint ; x
-                        trajectoryWriter.WriteLine(mo.trajectory[i].timestamp.TotalSeconds + ";" +  mo.trajectory[i].pos.x + ";;");
-                        trajectoryWriter.WriteLine(_tempGaze.trajectory[i].timestamp.TotalSeconds + ";;" + _tempGaze.trajectory[i].pos.x + ";"); // remove when >1 objects in the scene
+                        // trajectoryWriter.WriteLine(mo.trajectory[i].timestamp.TotalSeconds + ";" +  mo.trajectory[i].pos.x + ";;");
+                        // trajectoryWriter.WriteLine(_tempGaze.trajectory[i].timestamp.TotalSeconds + ";;" + _tempGaze.trajectory[i].pos.x + ";"); // remove when >1 objects in the scene
                     }
-                    _calcInProgress = false;
-                    nenner = nenner1 * nenner2;
-                    nenner = Math.Sqrt(nenner);
-                    coeff = zaehler / nenner;
-                    correlationWriter.WriteLine(mo.name + ";" + PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + coeff + ";" + (PupilGazeTracker.Instance._globalTime.TotalSeconds - calcTime));
-                    trajectoryWriter.WriteLine(calcTime + ";;;" + coeff);
-                    if (coeff > pearsonThreshold)
+
+                    nennerX = nenner1X * nenner2X;
+                    nennerX = Math.Sqrt(nennerX);
+
+                    nennerY = nenner1Y * nenner2Y;
+                    nennerY = Math.Sqrt(nennerY);
+
+                    coeffX = zaehlerX / nennerX;
+                    coeffY = zaehlerY / nennerY;
+                    
+                    // in cases where an onject only moves along one axis
+                    if (double.IsNaN(coeffX)) { coeffX = coeffY; }
+                    if (double.IsNaN(coeffY)) { coeffY = coeffX; }
+                                        
+
+                    correlationWriter.WriteLine(mo.name + ";" + PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + coeffX + ";" + coeffY + ";" + (PupilGazeTracker.Instance._globalTime.TotalSeconds - calcTime));
+                    // trajectoryWriter.WriteLine(calcTime + ";;;" + coeffX);
+                    if (((coeffX+coeffY)/2) > pearsonThreshold)
                         mo.activate(true);
                     else
                         mo.activate(false);
+
+                    
+
+                    _calcInProgress = false;
                 }
                 catch (Exception e)
                 {
@@ -277,7 +303,7 @@ public class Correlator : MonoBehaviour {
                 }
 
             }
-            yield return new WaitForSeconds(0.45f); //wait for x seconds before the next calculation
+            yield return new WaitForSeconds(0.25f); //wait for x seconds before the next calculation
         }
     }
 
