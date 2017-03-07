@@ -382,12 +382,12 @@ public class PupilGazeTracker:MonoBehaviour
 					}
 					catch
 					{
-					//	Debug.Log("Failed to unpack.");
+					    Debug.LogError("Failed to unpack.");
 					}
 				}
 				else
 				{
-				//	Debug.Log("Failed to receive a message.");
+				    Debug.LogError("Failed to receive a message.");
 					Thread.Sleep(500);
 				}
 			}

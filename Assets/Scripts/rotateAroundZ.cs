@@ -9,7 +9,7 @@ public class rotateAroundZ : MonoBehaviour {
     public bool counterClockwise, faceCenter;
 
     private double nextRad;
-    private Vector3 localCenter, up, localToWorld;
+    private Vector3 localCenter;
     private Quaternion startRotation;
 
 
