@@ -204,21 +204,24 @@ public class Correlator : MonoBehaviour {
         }
     }
 
-    // list, in which all trackable objects in the scene are stored
-    List<MovingObject> sceneObjects;
-    // list, in which the gaze trajectory is stored
-    MovingObject gazeTrajectory;
+    
     public PupilGazeTracker.GazeSource Gaze;
     public double pearsonThreshold = 0.8;
     // w: time window for the correlation algorithm, corrWindow: time window in which correlation coefficients are averaged
     public int w, corrWindow;
 
+
+    // list, in which all trackable objects in the scene are stored
+    List<MovingObject> sceneObjects;
+    // list, in which the gaze trajectory is stored
+    MovingObject gazeTrajectory;
     private volatile bool _shouldStop;
     // logfiles
     private StreamWriter correlationWriter, trajectoryWriter;
     //TODO: während die objekte für die korrelation geklont werden, keine punkte hinzufügen, um inkonsistenzen zu vermeiden
-    private bool _cloningInProgress; 
-    
+    private bool _cloningInProgress;
+    TimeSpan calcDur = new TimeSpan();
+
     // Use this for initialization
     void Start () {
         sceneObjects = new List<MovingObject>();
@@ -273,7 +276,7 @@ public class Correlator : MonoBehaviour {
         while (!_shouldStop)
         {
             TimeSpan calcStart = new TimeSpan();
-            TimeSpan calcDur = new TimeSpan();
+            
 
             List<MovingObject> _tempObjects = new List<MovingObject>();
             _cloningInProgress = true;
@@ -370,8 +373,9 @@ public class Correlator : MonoBehaviour {
     {
         if (sceneObjects.Count > 0)
         {
-            string str = "Watched Objects=" + sceneObjects.Count;
-            str += "\nTraj. Length:" + sceneObjects[0].trajectory.Count;
+            string str = "Watched Objects: " + sceneObjects.Count;
+            str += "\nTraj. Length: " + sceneObjects[0].trajectory.Count;
+            str += "\nCorr per sec: " + (1 / calcDur.TotalSeconds);
             GUI.TextArea(new Rect(200, 0, 200, 80), str);
         }
     }

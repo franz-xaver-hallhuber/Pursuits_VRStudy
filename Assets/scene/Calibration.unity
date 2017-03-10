@@ -173,35 +173,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gaze: {fileID: 113924061}
   Gaze: 0
---- !u!21 &263723042
-Material:
-  serializedVersion: 6
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_Name: Sprites/Default
-  m_Shader: {fileID: 10753, guid: 0000000000000000f000000000000000, type: 0}
-  m_ShaderKeywords: 
-  m_LightmapFlags: 5
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  m_SavedProperties:
-    serializedVersion: 2
-    m_TexEnvs:
-    - first:
-        name: _MainTex
-      second:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Floats:
-    - first:
-        name: PixelSnap
-      second: 0
-    m_Colors:
-    - first:
-        name: _Color
-      second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &298315435
 GameObject:
   m_ObjectHideFlags: 0
@@ -265,6 +236,35 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!21 &414602550
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: Sprites/Default
+  m_Shader: {fileID: 10753, guid: 0000000000000000f000000000000000, type: 0}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 5
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  m_SavedProperties:
+    serializedVersion: 2
+    m_TexEnvs:
+    - first:
+        name: _MainTex
+      second:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - first:
+        name: PixelSnap
+      second: 0
+    m_Colors:
+    - first:
+        name: _Color
+      second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &483563582
 GameObject:
   m_ObjectHideFlags: 0
@@ -309,8 +309,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 0.05
-  maxX: 4
-  minX: -4
+  min: 0
+  max: 0
+  movement: 0
 --- !u!23 &483563585
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -374,7 +375,7 @@ GameObject:
   - component: {fileID: 495861432}
   - component: {fileID: 495861431}
   m_Layer: 0
-  m_Name: Cube (2)
+  m_Name: circCube
   m_TagString: Trackable
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -409,6 +410,7 @@ MonoBehaviour:
   degreesPerSec: 45
   counterClockwise: 0
   faceCenter: 0
+  rotationAxis: 0
 --- !u!23 &495861432
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -665,8 +667,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Gaze: 1
-  w: 450
   pearsonThreshold: 0.9
+  w: 450
+  corrWindow: 250
 --- !u!4 &593787692
 Transform:
   m_ObjectHideFlags: 0
@@ -907,11 +910,11 @@ Prefab:
     - target: {fileID: 3380982, guid: 4d293c8e162f3874b982baadd71153d2, type: 2}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: 1275681061}
+      objectReference: {fileID: 2005904463}
     - target: {fileID: 2348914, guid: 4d293c8e162f3874b982baadd71153d2, type: 2}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 263723042}
+      objectReference: {fileID: 414602550}
     - target: {fileID: 146900, guid: 4d293c8e162f3874b982baadd71153d2, type: 2}
       propertyPath: m_IsActive
       value: 1
@@ -1239,10 +1242,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 819021e6b42fec243a520a27a7da87a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 0.05
-  maxX: 4
-  minX: -4
---- !u!43 &1275681061
+  speed: 2
+  min: -4
+  max: 4
+  movement: 0
+--- !u!43 &2005904463
 Mesh:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
@@ -1410,12 +1414,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 2095913824}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f5915ce035923de41a8ce6b1f34e3913, type: 3}
+  m_Script: {fileID: 11500000, guid: 819021e6b42fec243a520a27a7da87a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 0.05
-  maxY: 4
-  minY: -4
+  speed: 2
+  min: -4
+  max: 4
+  movement: 1
 --- !u!23 &2095913827
 MeshRenderer:
   m_ObjectHideFlags: 0
