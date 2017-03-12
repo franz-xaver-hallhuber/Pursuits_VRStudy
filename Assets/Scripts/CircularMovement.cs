@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class CircularMovement : MonoBehaviour {
 
-    public float radius, startAngle, degreesPerSec, accelerationPerSec = 0;
+    public float radius, startAngleDeg, degPerSec, accelerationPerSec = 0;
     public bool counterClockwise, faceCenter;
     public enum RotationAxis {
         xAxis,
@@ -22,7 +20,7 @@ public class CircularMovement : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         localCenter = transform.localPosition;
-        nextRad = Mathf.Deg2Rad * startAngle;
+        nextRad = Mathf.Deg2Rad * startAngleDeg;
         startRotation = transform.rotation;
     }
 
@@ -50,10 +48,10 @@ public class CircularMovement : MonoBehaviour {
             default:
                 break;
         }
-        // calculate next step
 
-        degreesPerSec += accelerationPerSec * Time.deltaTime;
-        nextRad += Mathf.Deg2Rad * (counterClockwise? 1 : -1) * degreesPerSec * Time.deltaTime;
+        // calculate next step
+        degPerSec += accelerationPerSec * Time.deltaTime;
+        nextRad += Mathf.Deg2Rad * (counterClockwise? 1 : -1) * degPerSec * Time.deltaTime;
         nextRad = (nextRad == Mathf.Abs(Mathf.PI * 2)) ? 0 : nextRad;
                 
         if (faceCenter)
