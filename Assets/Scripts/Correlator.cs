@@ -209,6 +209,7 @@ public class Correlator : MonoBehaviour {
     public double pearsonThreshold = 0.8;
     // w: time window for the correlation algorithm, corrWindow: time window in which correlation coefficients are averaged
     public int w, corrWindow;
+    public float corrFrequency;
 
 
     // list, in which all trackable objects in the scene are stored
@@ -356,7 +357,7 @@ public class Correlator : MonoBehaviour {
 
                 //if (results.Max() > pearsonThreshold) _tempObjects[results.IndexOf(results.Max())].activate(true);
             }
-            yield return new WaitForSeconds(0.25f - (float) calcDur.TotalSeconds); // calculation should take place every x seconds
+            yield return new WaitForSeconds(corrFrequency - (float) calcDur.TotalSeconds); // calculation should take place every x seconds
         }
     }
 
