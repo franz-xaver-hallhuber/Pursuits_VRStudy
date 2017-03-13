@@ -272,12 +272,72 @@ public class Correlator : MonoBehaviour {
         //Debug.Log("New Gaze");
     }
 
+    IEnumerator CalculateSpearman()
+    {
+        while (!_shouldStop)
+        {
+            TimeSpan calcStart = new TimeSpan();
+            calcStart = PupilGazeTracker.Instance._globalTime;
+
+            List<MovingObject> _tempObjects = new List<MovingObject>();
+            _cloningInProgress = true;
+            foreach (MovingObject mo in sceneObjects) _tempObjects.Add((MovingObject)mo.Clone()); //work on a copy to (hopefully) improve performance
+
+            MovingObject _tempGaze = (MovingObject)gazeTrajectory.Clone();
+            _cloningInProgress = false;
+            List<double> _tempXPgaze = new List<double>(_tempGaze.getXPoints());
+            List<double> _tempYPgaze = new List<double>(_tempGaze.getYPoints());
+
+            // sort positions
+            _tempXPgaze.Sort();
+            _tempYPgaze.Sort();
+
+            List<float> results = new List<float>();
+
+            foreach (MovingObject mo in _tempObjects)
+            {
+                // temporary list for not having to generate a new one at every loop
+                List<double> _tempXPObj = new List<double>(mo.getXPoints());
+                List<double> _tempYPObj = new List<double>(mo.getYPoints());
+
+                _tempXPObj.Sort();
+                _tempYPObj.Sort();
+
+                // surround calculation with try/catch block or else coroutine will end if something is divided by zero
+                try
+                {
+                   
+                }
+                catch (Exception e)
+                {
+                    
+                }
+
+
+
+                //if (results.Max() > pearsonThreshold) _tempObjects[results.IndexOf(results.Max())].activate(true);
+            }
+
+            //activate only one item at a time
+            for (int i = 0; i < results.Count; i++)
+            {
+                // activate the object with the highest correlation value only if it's above pearsonThreshold
+                if (results[i].CompareTo(results.Max()) == 0 && results[i] > pearsonThreshold / 2)
+                    _tempObjects[i].activate(true); //doesn't matter if original or clone list is used as both refer to the same GameObject
+                else
+                    _tempObjects[i].activate(false);
+            }
+
+            yield return new WaitForSeconds(corrFrequency - (float)calcDur.TotalSeconds); // calculation should take place every x seconds
+        }
+    }
+
     IEnumerator CalculatePearson()
     {
         while (!_shouldStop)
         {
             TimeSpan calcStart = new TimeSpan();
-            
+            calcStart = PupilGazeTracker.Instance._globalTime;
 
             List<MovingObject> _tempObjects = new List<MovingObject>();
             _cloningInProgress = true;
@@ -292,7 +352,7 @@ public class Correlator : MonoBehaviour {
 
             foreach (MovingObject mo in _tempObjects)
             {
-                calcStart = PupilGazeTracker.Instance._globalTime;
+                
                 double zaehlerX = 0, nennerX = 0, nenner1X = 0, nenner2X = 0, coeffX = 0;
                 double zaehlerY = 0, nennerY = 0, nenner1Y = 0, nenner2Y = 0, coeffY = 0;
 
@@ -320,19 +380,25 @@ public class Correlator : MonoBehaviour {
                         // trajectoryWriter.WriteLine(_tempGaze.trajectory[i].timestamp.TotalSeconds + ";;" + _tempGaze.trajectory[i].pos.x + ";"); // remove when >1 objects in the scene
                     }
 
+                    //Debug.Log("zX:" + zaehlerX + "zy:" + zaehlerY);
+
                     nennerX = nenner1X * nenner2X;
                     nennerX = Math.Sqrt(nennerX);
+
+                    //Debug.Log("n1x:" + nenner1X + "n2x:" + nenner2X);
 
                     nennerY = nenner1Y * nenner2Y;
                     nennerY = Math.Sqrt(nennerY);
 
+                    //Debug.Log("n1y:" + nenner1Y + "n2y" + nenner2Y);
+
                     coeffX = zaehlerX / nennerX;
                     coeffY = zaehlerY / nennerY;
                     
-                    // in cases where an onject only moves along one axis
-                    if (double.IsNaN(coeffX)) { coeffX = coeffY; }
-                    if (double.IsNaN(coeffY)) { coeffY = coeffX; }
-
+                    // in cases where an object only moves along one axis, replace NaN with 0
+                    if (double.IsNaN(coeffX)) { coeffX = 0; }
+                    if (double.IsNaN(coeffY)) { coeffY = 0; }
+                    
                     // add result to the original list
                     results.Add((float)sceneObjects.Find(x => x.Equals(mo)).addSample(calcStart, (coeffX + coeffY) / 2, corrWindow));
                     
@@ -345,18 +411,21 @@ public class Correlator : MonoBehaviour {
                     Debug.LogError("Out of bounds:" + e.StackTrace);
                 }
 
-                //activate only one item at a time
-                for (int i = 0; i < results.Count; i++)
-                {
-                    // activate the object with the highest correlation value only if it's above pearsonThreshold
-                    if (results[i].CompareTo(results.Max()) == 0 && results[i] > pearsonThreshold)
-                        _tempObjects[i].activate(true); //doesn't matter if original or clone list is used as both refer to the same GameObject
-                    else
-                        _tempObjects[i].activate(false);
-                }
+               
 
                 //if (results.Max() > pearsonThreshold) _tempObjects[results.IndexOf(results.Max())].activate(true);
             }
+
+            //activate only one item at a time
+            for (int i = 0; i < results.Count; i++)
+            {
+                // activate the object with the highest correlation value only if it's above pearsonThreshold
+                if (results[i].CompareTo(results.Max()) == 0 && results[i] > pearsonThreshold / 2)
+                    _tempObjects[i].activate(true); //doesn't matter if original or clone list is used as both refer to the same GameObject
+                else
+                    _tempObjects[i].activate(false);
+            }
+
             yield return new WaitForSeconds(corrFrequency - (float) calcDur.TotalSeconds); // calculation should take place every x seconds
         }
     }
