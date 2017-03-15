@@ -48,7 +48,7 @@ namespace Assets.Scripts
             if (go != null) name = go.name;
             else name = "gaze";
             positionWriter = new StreamWriter("log_" + name + "_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-            positionWriter.WriteLine(name + "Timestamp;" + name + "XPos");
+            positionWriter.WriteLine(name + "Timestamp;" + name + "XPos;" + name + "YPos");
             //positionWriter.WriteLine("nowTS;nowX;lastTS;lastX;pupilTS;scale");
 
         }
@@ -133,7 +133,7 @@ namespace Assets.Scripts
                 Vector3 _correctedPos = (_last.pos + Vector3.Scale(_current - _last.pos, new Vector3(scale, scale, scale)));
                 trajectory.Add(new TimePoint(n - timeDelay, _correctedPos));
                 // nowTS;nowX;lastTS;lastX;pupilTS;scale
-                positionWriter.WriteLine(n - timeDelay + ";" + _correctedPos.x);
+                positionWriter.WriteLine(n - timeDelay + ";" + _correctedPos.x + ";" + _correctedPos.y);
                 //positionWriter.WriteLine(n + ";" + _current.x + ";" + _last.timestamp.TotalSeconds + ";" + _last.pos.x + ";" + timeDelay + ";" + scale);
                 cleanUpTraj(w);
             }
@@ -157,7 +157,7 @@ namespace Assets.Scripts
         {
             TimePoint tp = new TimePoint(now() - timeDelay, gazePoint);
             trajectory.Add(tp);
-            positionWriter.WriteLine(tp.timestamp.TotalSeconds + ";" + gazePoint.x);
+            positionWriter.WriteLine(tp.timestamp.TotalSeconds + ";" + gazePoint.x + ";" + gazePoint.y);
             cleanUpTraj(w);
         }
 

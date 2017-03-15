@@ -137,6 +137,8 @@ public class Correlator : MonoBehaviour {
                     double coeffX = Spearman.calculateSpearman(_tempXPgaze, _tempXPObj);
                     double coeffY = Spearman.calculateSpearman(_tempYPgaze, _tempYPObj);
 
+                    correlationWriter.WriteLine(mo.name + ";" + calcStart.TotalSeconds + ";" + coeffX + ";" + coeffY);
+
                     // add result to the original list
                     results.Add((float)sceneObjects.Find(x => x.Equals(mo)).addSample(calcStart, (coeffX + coeffY) / 2, corrWindow));
                 }
@@ -204,7 +206,7 @@ public class Correlator : MonoBehaviour {
                     // add result to the original list
                     results.Add((float)sceneObjects.Find(x => x.Equals(mo)).addSample(calcStart, (coeffX + coeffY) / 2, corrWindow));
 
-                    correlationWriter.WriteLine(mo.name + ";" + PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + coeffX + ";" + coeffY + ";" + calcDur.TotalSeconds);
+                    correlationWriter.WriteLine(mo.name + ";" + calcStart.TotalSeconds + ";" + coeffX + ";" + coeffY);
                 }
                 catch (Exception e)
                 {
