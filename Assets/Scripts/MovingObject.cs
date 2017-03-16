@@ -73,6 +73,7 @@ namespace Assets.Scripts
             }
         }
 
+
         void cleanUpCorr(int y)
         {
             if (movingCorr.Count > 0)
@@ -117,6 +118,12 @@ namespace Assets.Scripts
         private double now()
         {
             return PupilGazeTracker.Instance._globalTime.TotalSeconds;
+        }
+
+        private void whatsMySize()
+        {
+            ObjectToPx opx = GameObject.Find("Camera (eye)").GetComponent<ObjectToPx>();
+            
         }
 
         /// <summary>

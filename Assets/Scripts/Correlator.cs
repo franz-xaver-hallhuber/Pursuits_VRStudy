@@ -76,6 +76,8 @@ public class Correlator : MonoBehaviour {
     void Update () {
         foreach (MovingObject mo in sceneObjects) mo.updatePosition();        
     }
+
+    
     
     /// <summary>
     /// Convert GameObject to a MovingObject and add it to the list of traced Objects
