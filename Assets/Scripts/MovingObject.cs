@@ -40,17 +40,25 @@ namespace Assets.Scripts
         public string name { get; set; }
         public List<TimePoint> trajectory { get; set; }
 
-        public MovingObject(GameObject go)
+        public MovingObject(GameObject go, int id)
         {
             this.go = go;
             trajectory = new List<TimePoint>();
             movingCorr = new List<TimeSample>();
-            if (go != null) name = go.name;
+            if (go != null)
+            {
+                name = go.name;
+                if (id > 0 && id <= 10)
+                {
+                    go.GetComponent<Renderer>().material.mainTexture = CreateNumberTexture.getNumberTexture(id);
+                }
+            }
             else name = "gaze";
             positionWriter = new StreamWriter("log_" + name + "_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
             positionWriter.WriteLine(name + "Timestamp;" + name + "XPos;" + name + "YPos");
             //positionWriter.WriteLine("nowTS;nowX;lastTS;lastX;pupilTS;scale");
-
+            
+            
         }
         public string getName()
         {
@@ -185,8 +193,18 @@ namespace Assets.Scripts
         public void activate(bool active)
         {
             Renderer r = this.go.GetComponent<Renderer>();
-            if (active) r.material.SetColor("_Color", Color.red);
-            else r.material.SetColor("_Color", Color.gray);
+            // Halo Behavior must be added to GameObjects manually as there's no way doing this by script
+            Behaviour halo = (Behaviour)go.GetComponent("Halo"); 
+            if (active)
+            {
+                //r.material.SetColor("_Color", Color.cyan);
+                halo.enabled = true;
+            }
+            else
+            {
+                //r.material.SetColor("_Color", Color.gray);
+                halo.enabled = false;
+            }
         }
 
         public int length()

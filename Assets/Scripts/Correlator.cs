@@ -43,14 +43,15 @@ public class Correlator : MonoBehaviour {
         Debug.Log("Start");
 
         sceneObjects = new List<MovingObject>();
-        gazeTrajectory = new MovingObject(null);
+        gazeTrajectory = new MovingObject(null,0);
         correlationWriter = new StreamWriter("log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         trajectoryWriter = new StreamWriter("log_Trajectories_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;t");
         //trajectoryWriter.WriteLine("Timestamp;xCube;xGaze;r");
 
         // search for objects tagged 'Trackable' and add them to the list
-        foreach (GameObject go in GameObject.FindGameObjectsWithTag("Trackable")) register(go);
+        int _newid = 1;
+        foreach (GameObject go in GameObject.FindGameObjectsWithTag("Trackable")) register(go, _newid++);
 
         // Set listener for new gaze points
         PupilGazeTracker.OnEyeGaze += new PupilGazeTracker.OnEyeGazeDeleg(UpdateTrajectories);
@@ -83,9 +84,9 @@ public class Correlator : MonoBehaviour {
     /// Convert GameObject to a MovingObject and add it to the list of traced Objects
     /// </summary>
     /// <param name="go">GameObject to be traced</param>
-    public void register(GameObject go)
+    public void register(GameObject go, int id)
     {
-        sceneObjects.Add(new MovingObject(go));
+        sceneObjects.Add(new MovingObject(go,id));
     }
 
     /// <summary>
