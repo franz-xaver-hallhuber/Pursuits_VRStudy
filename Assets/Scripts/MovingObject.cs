@@ -51,6 +51,7 @@ namespace Assets.Scripts
                 if (id > 0 && id <= 10)
                 {
                     go.GetComponent<Renderer>().material.mainTexture = CreateNumberTexture.getNumberTexture(id);
+                    name = "cube" + id;
                 }
             }
             else name = "gaze";
@@ -62,7 +63,7 @@ namespace Assets.Scripts
         }
         public string getName()
         {
-            return go.name;
+            return name;
         }
 
         /// <summary>
@@ -142,15 +143,23 @@ namespace Assets.Scripts
         {
             if (trajectory.Count > 0)
             {
+                
                 double n = now();
                 TimePoint _last = trajectory[trajectory.Count - 1];
-                float scale = (float)((n - timeDelay - _last.timestamp.TotalSeconds) / (n - _last.timestamp.TotalSeconds));
-                Vector3 _correctedPos = (_last.pos + Vector3.Scale(_current - _last.pos, new Vector3(scale, scale, scale)));
-                trajectory.Add(new TimePoint(n - timeDelay, _correctedPos));
-                // nowTS;nowX;lastTS;lastX;pupilTS;scale
-                positionWriter.WriteLine(n - timeDelay + ";" + _correctedPos.x + ";" + _correctedPos.y);
-                //positionWriter.WriteLine(n + ";" + _current.x + ";" + _last.timestamp.TotalSeconds + ";" + _last.pos.x + ";" + timeDelay + ";" + scale);
-                cleanUpTraj(w);
+                try
+                {
+                    float scale = (float)((n - timeDelay - _last.timestamp.TotalSeconds) / (n - _last.timestamp.TotalSeconds));
+                    Vector3 _correctedPos = (_last.pos + Vector3.Scale(_current - _last.pos, new Vector3(scale, scale, scale)));
+                    trajectory.Add(new TimePoint(n - timeDelay, _correctedPos));
+                    // nowTS;nowX;lastTS;lastX;pupilTS;scale
+                    positionWriter.WriteLine(n - timeDelay + ";" + _correctedPos.x + ";" + _correctedPos.y);
+                    //positionWriter.WriteLine(n + ";" + _current.x + ";" + _last.timestamp.TotalSeconds + ";" + _last.pos.x + ";" + timeDelay + ";" + scale);
+                    cleanUpTraj(w);
+                } catch (Exception e)
+                {
+                    Debug.LogError("timeDelay:" + timeDelay + " _last:" + _last.timestamp.TotalSeconds + " n: " + n);
+                }
+                
             }
             else
             {

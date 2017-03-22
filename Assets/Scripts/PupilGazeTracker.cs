@@ -380,9 +380,9 @@ public class PupilGazeTracker:MonoBehaviour
 						}
 						//Debug.Log(message);
 					}
-					catch
+					catch (Exception e)
 					{
-					    Debug.LogError("Failed to unpack.");
+					    Debug.LogError("Failed to unpack:" + e.StackTrace);
 					}
 				}
 				else
