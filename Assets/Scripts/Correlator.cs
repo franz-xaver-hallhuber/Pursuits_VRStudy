@@ -17,8 +17,7 @@ public class Correlator : MonoBehaviour {
     public float corrFrequency;
     public enum CorrelationMethod { Pearson, Spearman };
     public CorrelationMethod Coefficient;
-
-
+    
     // list, in which all trackable objects in the scene are stored
     List<MovingObject> sceneObjects;
 
@@ -28,7 +27,7 @@ public class Correlator : MonoBehaviour {
     private volatile bool _shouldStop;
 
     // logfiles
-    private StreamWriter correlationWriter, trajectoryWriter;
+    private StreamWriter correlationWriter;
 
     //TODO: während die objekte für die korrelation geklont werden, keine punkte hinzufügen, um inkonsistenzen zu vermeiden
     private bool _cloningInProgress, _spearmanIsRunning, _pearsonIsRunning;
@@ -45,7 +44,7 @@ public class Correlator : MonoBehaviour {
         sceneObjects = new List<MovingObject>();
         gazeTrajectory = new MovingObject(null,0);
         correlationWriter = new StreamWriter("log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-        trajectoryWriter = new StreamWriter("log_Trajectories_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+        // trajectoryWriter = new StreamWriter("log_Trajectories_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;t");
         //trajectoryWriter.WriteLine("Timestamp;xCube;xGaze;r");
 
@@ -125,7 +124,11 @@ public class Correlator : MonoBehaviour {
             _cloningInProgress = false;
             List<double> _tempXPgaze = new List<double>(_tempGaze.getXPoints());
             List<double> _tempYPgaze = new List<double>(_tempGaze.getYPoints());
-            
+
+            // write gaze points in logfile
+            //foreach (double dx in _tempXPgaze) trajectoryWriter.WriteLine("gazex;" + calcStart.TotalSeconds + dx);
+            //foreach (double dy in _tempYPgaze) trajectoryWriter.WriteLine("gazey;" + calcStart.TotalSeconds + dy);
+
             List<float> results = new List<float>();
 
             foreach (MovingObject mo in _tempObjects)
@@ -133,7 +136,11 @@ public class Correlator : MonoBehaviour {
                 // temporary list for not having to generate a new one at every loop
                 List<double> _tempXPObj = new List<double>(mo.getXPoints());
                 List<double> _tempYPObj = new List<double>(mo.getYPoints());
-                
+
+                // write object coordinates to logfile
+                //foreach (double dx in _tempXPObj) trajectoryWriter.WriteLine(mo.name + ";" + calcStart.TotalSeconds + dx);
+                //foreach (double dy in _tempXPObj) trajectoryWriter.WriteLine(mo.name + ";" + calcStart.TotalSeconds + dy);
+
                 // surround calculation with try/catch block or else coroutine will end if something is divided by zero
                 try
                 {
@@ -142,7 +149,7 @@ public class Correlator : MonoBehaviour {
 
                     correlationWriter.WriteLine(mo.name + ";" + calcStart.TotalSeconds + ";" + coeffX + ";" + coeffY);
 
-                    // add result to the original list
+                    // add result to the MovingObject in the original list
                     results.Add((float)sceneObjects.Find(x => x.Equals(mo)).addSample(calcStart, (coeffX + coeffY) / 2, corrWindow));
                 }
                 catch (Exception e)
@@ -239,7 +246,7 @@ public class Correlator : MonoBehaviour {
         foreach (MovingObject mo in sceneObjects) mo.killMe();
         correlationWriter.Close();
         gazeTrajectory.killMe();
-        trajectoryWriter.Close();
+        //trajectoryWriter.Close();
     }
 
     private void OnGUI()

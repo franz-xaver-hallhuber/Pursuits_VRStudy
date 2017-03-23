@@ -56,7 +56,7 @@ namespace Assets.Scripts
             }
             else name = "gaze";
             positionWriter = new StreamWriter("log_" + name + "_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-            positionWriter.WriteLine(name + "Timestamp;" + name + "XPos;" + name + "YPos");
+            positionWriter.WriteLine(name + "Timestamp;" + name + "XPos;" + name + "YPos;" + name + "newCorr;" + name + "smoothCorr");
             //positionWriter.WriteLine("nowTS;nowX;lastTS;lastX;pupilTS;scale");
             
             
@@ -104,10 +104,18 @@ namespace Assets.Scripts
         /// <returns>the average of all coefficients within <paramref name="y"/> Milliseconds</returns>
         public double addSample(TimeSpan ts, double s, int y)
         {
+            // filter invalid correlation values
+            if (double.IsNaN(s)) s = 0;
+            if (s > 1 || s < -1) s = 0;
+
             movingCorr.Add(new TimeSample(ts, s));
+
+            // average sample values
             List<double> coefficients = new List<double>();
             foreach (TimeSample sample in movingCorr) coefficients.Add(sample.sample);
             cleanUpCorr(y);
+
+            positionWriter.WriteLine(ts.TotalSeconds + ";;;" + s + ";" + coefficients.Average());
             return coefficients.Average();
         }
 
@@ -152,7 +160,7 @@ namespace Assets.Scripts
                     Vector3 _correctedPos = (_last.pos + Vector3.Scale(_current - _last.pos, new Vector3(scale, scale, scale)));
                     trajectory.Add(new TimePoint(n - timeDelay, _correctedPos));
                     // nowTS;nowX;lastTS;lastX;pupilTS;scale
-                    positionWriter.WriteLine(n - timeDelay + ";" + _correctedPos.x + ";" + _correctedPos.y);
+                    // positionWriter.WriteLine(n - timeDelay + ";" + _correctedPos.x + ";" + _correctedPos.y);
                     //positionWriter.WriteLine(n + ";" + _current.x + ";" + _last.timestamp.TotalSeconds + ";" + _last.pos.x + ";" + timeDelay + ";" + scale);
                     cleanUpTraj(w);
                 } catch (Exception e)
@@ -230,6 +238,11 @@ namespace Assets.Scripts
         {
             MovingObject newMo = (MovingObject)this.MemberwiseClone();
             newMo.trajectory = new List<TimePoint>(this.trajectory);
+            foreach (TimePoint tp in newMo.trajectory)
+            {
+                positionWriter.WriteLine(tp.timestamp.TotalSeconds + ";" + tp.pos.x + ";" + tp.pos.y + ";;");
+            }
+
             return newMo;
         }
 
