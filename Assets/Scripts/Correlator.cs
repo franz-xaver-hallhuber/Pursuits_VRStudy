@@ -6,7 +6,7 @@ using System.Linq;
 using System.IO;
 using Correlation;
 using Assets.Scripts;
-
+using UnityEngine.SceneManagement;
 
 public class Correlator : MonoBehaviour {
     
@@ -18,7 +18,7 @@ public class Correlator : MonoBehaviour {
     public enum CorrelationMethod { Pearson, Spearman };
     public CorrelationMethod Coefficient;
 
-    public static int trialNo;
+    public int trialNo;
     // list, in which all trackable objects in the scene are stored
     List<MovingObject> sceneObjects;
 
@@ -29,6 +29,7 @@ public class Correlator : MonoBehaviour {
 
     // logfiles
     private StreamWriter correlationWriter;
+    private String logFolder = "Logfiles";
 
     //TODO: während die objekte für die korrelation geklont werden, keine punkte hinzufügen, um inkonsistenzen zu vermeiden
     private bool _cloningInProgress, _spearmanIsRunning, _pearsonIsRunning;
@@ -42,12 +43,13 @@ public class Correlator : MonoBehaviour {
     void Start () {
         // Debug.Log("Start");
         
-        trialNo = doLoggingStuff();
-        string logPath = "Logfiles\\Participant" + trialNo;
+        //trialNo = doLoggingStuff();
+        string logPath = logFolder + @"\Participant" + trialNo + @"\" + SceneManager.GetActiveScene().name;
+        Directory.CreateDirectory(logPath);
 
         sceneObjects = new List<MovingObject>();
         gazeTrajectory = new MovingObject(null,0, trialNo);
-        correlationWriter = new StreamWriter(logPath + @"\log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+        correlationWriter = new StreamWriter(logPath +  @"\log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         // trajectoryWriter = new StreamWriter("log_Trajectories_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;t");
         //trajectoryWriter.WriteLine("Timestamp;xCube;xGaze;r");
@@ -63,22 +65,30 @@ public class Correlator : MonoBehaviour {
         startCoroutine();
 	}
 
+    /// <summary>
+    /// Generates new Participant ID
+    /// </summary>
+    /// <returns>New Participant ID</returns>
     private int doLoggingStuff()
     {
+        Directory.CreateDirectory(logFolder);
+
         int _ret;
-        if (File.Exists("Logfiles\\last"))
+        if (File.Exists("last"))
         {
-            StreamReader trialReader = new StreamReader("Logfiles\\last");
+            StreamReader trialReader = new StreamReader(logFolder + @"\last");
             _ret = Int32.Parse(trialReader.ReadLine());
             trialReader.Close();
-            File.Delete("Logfiles\\last");
+            File.Delete(logFolder + @"\last");
             _ret++;
         }
         else { _ret = 1; }
 
-        StreamWriter trialWriter = new StreamWriter("Logfiles\\last");
+        StreamWriter trialWriter = new StreamWriter(logFolder + @"\last");
         trialWriter.Write(_ret);
         trialWriter.Close();
+
+        Directory.CreateDirectory(logFolder + @"\Participant" + _ret);
 
         return _ret;
     }

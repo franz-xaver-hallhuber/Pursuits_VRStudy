@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Assets.Scripts
 {
@@ -56,8 +57,7 @@ namespace Assets.Scripts
             }
             else name = "gaze";
 
-            string logPath = "Logfiles\\Participant" + trial;
-            Directory.CreateDirectory(logPath);
+            string logPath = "Logfiles\\Participant" + trial + @"\" + SceneManager.GetActiveScene().name;
 
             positionWriter = new StreamWriter(logPath + @"\log_" + name + "_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
             positionWriter.WriteLine(name + "Timestamp;" + name + "XPos;" + name + "YPos;" + name + "newCorr;" + name + "smoothCorr");
