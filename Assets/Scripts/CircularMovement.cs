@@ -4,7 +4,7 @@ using UnityEngine;
 public class CircularMovement : MonoBehaviour {
 
     public float radius, startAngleDeg, degPerSec, accelerationPerSec = 0;
-    public bool counterClockwise, faceCenter;
+    public bool counterClockwise, faceCenter, randomStartPosition;
     public enum RotationAxis {
         xAxis,
         yAxis,
@@ -19,8 +19,9 @@ public class CircularMovement : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+
         localCenter = transform.localPosition;
-        nextRad = Mathf.Deg2Rad * startAngleDeg;
+        nextRad = Mathf.Deg2Rad * (randomStartPosition ? UnityEngine.Random.Range(0,259) : startAngleDeg);
         startRotation = transform.rotation;
     }
 

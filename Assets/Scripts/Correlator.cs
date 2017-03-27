@@ -17,7 +17,8 @@ public class Correlator : MonoBehaviour {
     public float corrFrequency;
     public enum CorrelationMethod { Pearson, Spearman };
     public CorrelationMethod Coefficient;
-    
+
+    public static int trialNo;
     // list, in which all trackable objects in the scene are stored
     List<MovingObject> sceneObjects;
 
@@ -39,16 +40,19 @@ public class Correlator : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
-        Debug.Log("Start");
+        // Debug.Log("Start");
+        
+        trialNo = doLoggingStuff();
+        string logPath = "Logfiles\\Participant" + trialNo;
 
         sceneObjects = new List<MovingObject>();
-        gazeTrajectory = new MovingObject(null,0);
-        correlationWriter = new StreamWriter("log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+        gazeTrajectory = new MovingObject(null,0, trialNo);
+        correlationWriter = new StreamWriter(logPath + @"\log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         // trajectoryWriter = new StreamWriter("log_Trajectories_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;t");
         //trajectoryWriter.WriteLine("Timestamp;xCube;xGaze;r");
-
-        // search for objects tagged 'Trackable' and add them to the list
+        
+        // search for objects tagged 'Trackable', give them an ID and add them to the list
         int _newid = 1;
         foreach (GameObject go in GameObject.FindGameObjectsWithTag("Trackable")) register(go, _newid++);
 
@@ -58,6 +62,26 @@ public class Correlator : MonoBehaviour {
         // start the selected correlation coroutine
         startCoroutine();
 	}
+
+    private int doLoggingStuff()
+    {
+        int _ret;
+        if (File.Exists("Logfiles\\last"))
+        {
+            StreamReader trialReader = new StreamReader("Logfiles\\last");
+            _ret = Int32.Parse(trialReader.ReadLine());
+            trialReader.Close();
+            File.Delete("Logfiles\\last");
+            _ret++;
+        }
+        else { _ret = 1; }
+
+        StreamWriter trialWriter = new StreamWriter("Logfiles\\last");
+        trialWriter.Write(_ret);
+        trialWriter.Close();
+
+        return _ret;
+    }
 
     private void startCoroutine()
     {
@@ -85,7 +109,7 @@ public class Correlator : MonoBehaviour {
     /// <param name="go">GameObject to be traced</param>
     public void register(GameObject go, int id)
     {
-        sceneObjects.Add(new MovingObject(go,id));
+        sceneObjects.Add(new MovingObject(go,id,trialNo));
     }
 
     /// <summary>

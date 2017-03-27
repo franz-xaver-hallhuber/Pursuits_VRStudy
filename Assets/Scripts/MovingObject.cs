@@ -40,7 +40,7 @@ namespace Assets.Scripts
         public string name { get; set; }
         public List<TimePoint> trajectory { get; set; }
 
-        public MovingObject(GameObject go, int id)
+        public MovingObject(GameObject go, int id, int trial)
         {
             this.go = go;
             trajectory = new List<TimePoint>();
@@ -55,7 +55,11 @@ namespace Assets.Scripts
                 }
             }
             else name = "gaze";
-            positionWriter = new StreamWriter("log_" + name + "_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+
+            string logPath = "Logfiles\\Participant" + trial;
+            Directory.CreateDirectory(logPath);
+
+            positionWriter = new StreamWriter(logPath + @"\log_" + name + "_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
             positionWriter.WriteLine(name + "Timestamp;" + name + "XPos;" + name + "YPos;" + name + "newCorr;" + name + "smoothCorr");
             //positionWriter.WriteLine("nowTS;nowX;lastTS;lastX;pupilTS;scale");
             

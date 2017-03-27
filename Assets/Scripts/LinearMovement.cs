@@ -2,6 +2,7 @@
 
 public class LinearMovement : MonoBehaviour {
     public float speed, min, max, accelerationPerSec = 0;
+    public bool randomStartPosition;
     //StreamWriter write;
 
     //progressiveTilt parentobject;
@@ -15,7 +16,21 @@ public class LinearMovement : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-         
+        if (randomStartPosition)
+        {
+            switch (movement)
+            {
+                case MovementType.xAxis:
+                    transform.localPosition = new Vector3(Random.Range(min, max), transform.localPosition.y, transform.localPosition.z);
+                    break;
+                case MovementType.yAxis:
+                    transform.localPosition = new Vector3(transform.localPosition.x, Random.Range(min, max), transform.localPosition.z);
+                    break;
+                case MovementType.zAxis:
+                    transform.localPosition = new Vector3(transform.localPosition.x, transform.localPosition.y, Random.Range(min, max));
+                    break;
+            }
+        }
 	}
 	
 	// Update is called once per frame
