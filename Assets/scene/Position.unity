@@ -150,6 +150,7 @@ MonoBehaviour:
   min: -3
   max: 3
   accelerationPerSec: 0
+  randomStartPosition: 0
   movement: 0
 --- !u!23 &74102838
 MeshRenderer:
@@ -283,7 +284,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gaze: {fileID: 113924061}
   Gaze: 0
---- !u!43 &196893929
+--- !u!43 &186111036
 Mesh:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
@@ -470,6 +471,7 @@ MonoBehaviour:
   min: -3
   max: 3
   accelerationPerSec: 0
+  randomStartPosition: 0
   movement: 1
 --- !u!23 &221649749
 MeshRenderer:
@@ -521,35 +523,6 @@ MeshFilter:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 221649745}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!21 &246032790
-Material:
-  serializedVersion: 6
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_Name: Sprites/Default
-  m_Shader: {fileID: 10753, guid: 0000000000000000f000000000000000, type: 0}
-  m_ShaderKeywords: 
-  m_LightmapFlags: 5
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  m_SavedProperties:
-    serializedVersion: 2
-    m_TexEnvs:
-    - first:
-        name: _MainTex
-      second:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Floats:
-    - first:
-        name: PixelSnap
-      second: 0
-    m_Colors:
-    - first:
-        name: _Color
-      second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &298315435
 GameObject:
   m_ObjectHideFlags: 0
@@ -853,12 +826,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 716b70331ce015241ba3d6ba702cf045, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Gaze: 1
+  Gaze: 2
   threshold: 0.9
   w: 450
   corrWindow: 900
   corrFrequency: 0.45
-  Coefficient: 1
+  Coefficient: 0
+  trialNo: 1
 --- !u!4 &593787692
 Transform:
   m_ObjectHideFlags: 0
@@ -872,6 +846,35 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!21 &618794602
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: Sprites/Default
+  m_Shader: {fileID: 10753, guid: 0000000000000000f000000000000000, type: 0}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 5
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  m_SavedProperties:
+    serializedVersion: 2
+    m_TexEnvs:
+    - first:
+        name: _MainTex
+      second:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - first:
+        name: PixelSnap
+      second: 0
+    m_Colors:
+    - first:
+        name: _Color
+      second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &626624959
 GameObject:
   m_ObjectHideFlags: 0
@@ -889,7 +892,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &626624960
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1036,6 +1039,7 @@ MonoBehaviour:
   min: -3
   max: 3
   accelerationPerSec: 0
+  randomStartPosition: 0
   movement: 0
 --- !u!23 &694361550
 MeshRenderer:
@@ -1261,6 +1265,7 @@ MonoBehaviour:
   min: -3
   max: 3
   accelerationPerSec: 0
+  randomStartPosition: 0
   movement: 1
 --- !u!23 &890156754
 MeshRenderer:
@@ -1354,11 +1359,11 @@ Prefab:
     - target: {fileID: 3380982, guid: 4d293c8e162f3874b982baadd71153d2, type: 2}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: 196893929}
+      objectReference: {fileID: 186111036}
     - target: {fileID: 2348914, guid: 4d293c8e162f3874b982baadd71153d2, type: 2}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 246032790}
+      objectReference: {fileID: 618794602}
     - target: {fileID: 146900, guid: 4d293c8e162f3874b982baadd71153d2, type: 2}
       propertyPath: m_IsActive
       value: 1
@@ -1524,6 +1529,7 @@ MonoBehaviour:
   min: -3
   max: 3
   accelerationPerSec: 0
+  randomStartPosition: 0
   movement: 0
 --- !u!23 &966141014
 MeshRenderer:
@@ -1801,6 +1807,7 @@ MonoBehaviour:
   min: -3
   max: 3
   accelerationPerSec: 0
+  randomStartPosition: 0
   movement: 0
 --- !u!122 &1220900748
 Halo:
@@ -1872,6 +1879,7 @@ MonoBehaviour:
   min: -3
   max: 3
   accelerationPerSec: 0
+  randomStartPosition: 0
   movement: 1
 --- !u!23 &1296983299
 MeshRenderer:
@@ -1982,6 +1990,7 @@ MonoBehaviour:
   min: -3
   max: 3
   accelerationPerSec: 0
+  randomStartPosition: 0
   movement: 1
 --- !u!23 &1394301715
 MeshRenderer:
@@ -2092,6 +2101,7 @@ MonoBehaviour:
   min: -3
   max: 3
   accelerationPerSec: 0
+  randomStartPosition: 0
   movement: 1
 --- !u!23 &1444743539
 MeshRenderer:
@@ -2202,6 +2212,7 @@ MonoBehaviour:
   min: -3
   max: 3
   accelerationPerSec: 0
+  randomStartPosition: 0
   movement: 0
 --- !u!23 &1494320233
 MeshRenderer:
@@ -2312,6 +2323,7 @@ MonoBehaviour:
   min: -3
   max: 3
   accelerationPerSec: 0
+  randomStartPosition: 0
   movement: 1
 --- !u!23 &1599599277
 MeshRenderer:
@@ -2422,6 +2434,7 @@ MonoBehaviour:
   min: -3
   max: 3
   accelerationPerSec: 0
+  randomStartPosition: 0
   movement: 0
 --- !u!23 &1756192708
 MeshRenderer:
@@ -2532,6 +2545,7 @@ MonoBehaviour:
   min: -3
   max: 3
   accelerationPerSec: 0
+  randomStartPosition: 0
   movement: 0
 --- !u!23 &1827780361
 MeshRenderer:
@@ -2642,6 +2656,7 @@ MonoBehaviour:
   min: -3
   max: 3
   accelerationPerSec: 0
+  randomStartPosition: 0
   movement: 1
 --- !u!23 &2104803481
 MeshRenderer:

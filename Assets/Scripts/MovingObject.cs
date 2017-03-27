@@ -12,6 +12,8 @@ namespace Assets.Scripts
         public TimeSpan timestamp { get; set; }
         public Vector3 pos { get; set; }
 
+        
+
         public TimePoint(double time, Vector3 currentPos)
         {
             this.timestamp = TimeSpan.FromSeconds(time);
@@ -37,9 +39,14 @@ namespace Assets.Scripts
         private StreamWriter positionWriter;
         private Vector3 _current;
         private List<TimeSample> movingCorr;
+        private Queue<TimePoint> tpBuffer;
+
+        static bool copyinprogress;
 
         public string name { get; set; }
         public List<TimePoint> trajectory { get; set; }
+
+
 
         public MovingObject(GameObject go, int id, int trial)
         {
@@ -58,6 +65,7 @@ namespace Assets.Scripts
             else name = "gaze";
 
             string logPath = "Logfiles\\Participant" + trial + @"\" + SceneManager.GetActiveScene().name;
+            tpBuffer = new Queue<TimePoint>();
 
             positionWriter = new StreamWriter(logPath + @"\log_" + name + "_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
             positionWriter.WriteLine(name + "Timestamp;" + name + "XPos;" + name + "YPos;" + name + "newCorr;" + name + "smoothCorr");
@@ -162,11 +170,19 @@ namespace Assets.Scripts
                 {
                     float scale = (float)((n - timeDelay - _last.timestamp.TotalSeconds) / (n - _last.timestamp.TotalSeconds));
                     Vector3 _correctedPos = (_last.pos + Vector3.Scale(_current - _last.pos, new Vector3(scale, scale, scale)));
-                    trajectory.Add(new TimePoint(n - timeDelay, _correctedPos));
-                    // nowTS;nowX;lastTS;lastX;pupilTS;scale
-                    // positionWriter.WriteLine(n - timeDelay + ";" + _correctedPos.x + ";" + _correctedPos.y);
-                    //positionWriter.WriteLine(n + ";" + _current.x + ";" + _last.timestamp.TotalSeconds + ";" + _last.pos.x + ";" + timeDelay + ";" + scale);
-                    cleanUpTraj(w);
+                    if (copyinprogress)
+                    {
+                        tpBuffer.Enqueue(new TimePoint(n - timeDelay, _correctedPos));
+                        // Debug.Log("Objects Enqueued " + tpBuffer.Count);
+                    }
+
+                    else
+                    {
+                        while (tpBuffer.Count > 0) trajectory.Add(tpBuffer.Dequeue());
+                        trajectory.Add(new TimePoint(n - timeDelay, _correctedPos));
+                        cleanUpTraj(w);
+                    }
+                    
                 } catch (Exception e)
                 {
                     Debug.LogError("timeDelay:" + timeDelay + " _last:" + _last.timestamp.TotalSeconds + " n: " + n);
@@ -177,7 +193,6 @@ namespace Assets.Scripts
             {
                 // in case trajectory is empty
                 addNewPosition(w);
-
             }
         }
 
@@ -236,17 +251,20 @@ namespace Assets.Scripts
         public void killMe()
         {
             positionWriter.Close();
+            copyinprogress = false;
         }
 
         public object Clone()
         {
+            copyinprogress = true;
             MovingObject newMo = (MovingObject)this.MemberwiseClone();
+            
             newMo.trajectory = new List<TimePoint>(this.trajectory);
             foreach (TimePoint tp in newMo.trajectory)
             {
                 positionWriter.WriteLine(tp.timestamp.TotalSeconds + ";" + tp.pos.x + ";" + tp.pos.y + ";;");
             }
-
+            copyinprogress = false;
             return newMo;
         }
 

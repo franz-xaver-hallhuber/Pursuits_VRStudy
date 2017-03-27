@@ -19,8 +19,7 @@ ExportedObj/
 *.svd
 
 # Log files
-*.csv
-
+/Logfiles
 
 # Unity3D generated meta files
 *.pidb.meta
