@@ -59,7 +59,7 @@ namespace Assets.Scripts
                 if (id > 0 && id <= 10)
                 {
                     go.GetComponent<Renderer>().material.mainTexture = CreateNumberTexture.getNumberTexture(id);
-                    name = "cube" + id;
+                    name = go.name + "Cube" + id;
                 }
             }
             else name = "gaze";
@@ -124,10 +124,11 @@ namespace Assets.Scripts
 
             // average sample values
             List<double> coefficients = new List<double>();
-            foreach (TimeSample sample in movingCorr) coefficients.Add(sample.sample);
             cleanUpCorr(y);
-
+            foreach (TimeSample sample in movingCorr) coefficients.Add(sample.sample);
+            
             positionWriter.WriteLine(ts.TotalSeconds + ";;;" + s + ";" + coefficients.Average());
+            //Debug.Log("log:" + coefficients.Average());
             return coefficients.Average();
         }
 

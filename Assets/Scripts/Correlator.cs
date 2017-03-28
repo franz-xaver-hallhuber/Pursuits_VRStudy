@@ -51,9 +51,8 @@ public class Correlator : MonoBehaviour {
         gazeTrajectory = new MovingObject(null,0, trialNo);
         correlationWriter = new StreamWriter(logPath +  @"\log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         // trajectoryWriter = new StreamWriter("log_Trajectories_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-        correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;t");
+        correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye");
         //trajectoryWriter.WriteLine("Timestamp;xCube;xGaze;r");
-        
         // search for objects tagged 'Trackable', give them an ID and add them to the list
         int _newid = 1;
         foreach (GameObject go in GameObject.FindGameObjectsWithTag("Trackable")) register(go, _newid++);
@@ -181,7 +180,7 @@ public class Correlator : MonoBehaviour {
                     double coeffX = Spearman.calculateSpearman(_tempXPgaze, _tempXPObj);
                     double coeffY = Spearman.calculateSpearman(_tempYPgaze, _tempYPObj);
 
-                    correlationWriter.WriteLine(mo.name + ";" + calcStart.TotalSeconds + ";" + coeffX + ";" + coeffY);
+                    correlationWriter.WriteLine(mo.name + ";" + calcStart.TotalSeconds + ";" + coeffX + ";" + coeffY + ";" + w + ";" + corrWindow + ";" + corrFrequency + ";" + Coefficient + ";" + Gaze);
 
                     // add result to the MovingObject in the original list
                     results.Add((float)sceneObjects.Find(x => x.Equals(mo)).addSample(calcStart, (coeffX + coeffY) / 2, corrWindow));
@@ -250,7 +249,8 @@ public class Correlator : MonoBehaviour {
                     // add result to the original list
                     results.Add((float)sceneObjects.Find(x => x.Equals(mo)).addSample(calcStart, (coeffX + coeffY) / 2, corrWindow));
 
-                    correlationWriter.WriteLine(mo.name + ";" + calcStart.TotalSeconds + ";" + coeffX + ";" + coeffY);
+                    correlationWriter.WriteLine(mo.name + ";" + calcStart.TotalSeconds + ";" + coeffX + ";" + coeffY + ";" + w + ";" + corrWindow + ";" + corrFrequency + ";" + Coefficient + ";" + Gaze);
+       
                 }
                 catch (Exception e)
                 {
