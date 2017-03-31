@@ -1,0 +1,18 @@
+2017-03-31 16:55:33,066+0200 INFO  initexmf - starting: MiKTeX Configuration Utility 2.9.6234 (MiKTeX 2.9.6210)
+2017-03-31 16:55:33,082+0200 INFO  initexmf - running: mkfntmap 
+2017-03-31 16:55:33,171+0200 INFO  initexmf - starting: MiKTeX Configuration Utility 2.9.6234 (MiKTeX 2.9.6210)
+2017-03-31 16:55:33,183+0200 INFO  initexmf - Creating fndb for common root directory (E:\MA_Oechsner\ViveCalibration_Unity\MikTex\texmfs/config)...
+2017-03-31 16:55:33,196+0200 INFO  initexmf - Creating fndb for common root directory (E:\MA_Oechsner\ViveCalibration_Unity\MikTex\texmfs/data)...
+2017-03-31 16:55:33,209+0200 INFO  initexmf - Creating fndb for common root directory (E:\MA_Oechsner\ViveCalibration_Unity\MikTex\texmfs\install)...
+2017-03-31 17:04:33,592+0200 INFO  initexmf - starting: MiKTeX Configuration Utility 2.9.6234 (MiKTeX 2.9.6210)
+2017-03-31 17:04:33,608+0200 INFO  initexmf - running 'miktex-makefmt.exe --engine=pdftex --dest-name=pdflatex --no-dump pdflatex.ini --engine-option=-tcx=cp227.tcx'
+2017-03-31 17:05:18,625+0200 INFO  initexmf - starting: MiKTeX Configuration Utility 2.9.6234 (MiKTeX 2.9.6210)
+2017-03-31 17:05:18,659+0200 INFO  initexmf - running: mkfntmap 
+2017-03-31 17:05:36,756+0200 INFO  initexmf - starting: MiKTeX Configuration Utility 2.9.6234 (MiKTeX 2.9.6210)
+2017-03-31 17:05:36,787+0200 INFO  initexmf - running: mkfntmap 
+2017-03-31 17:06:17,884+0200 INFO  initexmf - starting: MiKTeX Configuration Utility 2.9.6234 (MiKTeX 2.9.6210)
+2017-03-31 17:06:17,917+0200 INFO  initexmf - running: mkfntmap 
+2017-03-31 17:06:50,405+0200 INFO  initexmf - starting: MiKTeX Configuration Utility 2.9.6234 (MiKTeX 2.9.6210)
+2017-03-31 17:06:50,442+0200 INFO  initexmf - running: mkfntmap 
+2017-03-31 17:06:52,864+0200 INFO  initexmf - starting: MiKTeX Configuration Utility 2.9.6234 (MiKTeX 2.9.6210)
+2017-03-31 17:06:52,879+0200 INFO  initexmf - running 'miktex-makebase.exe --dest-name=mf --no-dump mf.ini --engine-option=-tcx=cp227.tcx'
