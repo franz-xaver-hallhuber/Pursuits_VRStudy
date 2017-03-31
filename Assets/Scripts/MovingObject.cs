@@ -11,9 +11,7 @@ namespace Assets.Scripts
     {
         public TimeSpan timestamp { get; set; }
         public Vector3 pos { get; set; }
-
         
-
         public TimePoint(double time, Vector3 currentPos)
         {
             this.timestamp = TimeSpan.FromSeconds(time);
