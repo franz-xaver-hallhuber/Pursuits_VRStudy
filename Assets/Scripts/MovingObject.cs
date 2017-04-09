@@ -31,6 +31,13 @@ namespace Assets.Scripts
         }
     }
 
+    public enum trajectoryType
+    {
+        linear,
+        circular,
+        none
+    }
+
     public class MovingObject : ICloneable, IEquatable<MovingObject>
     {
         GameObject go;
@@ -38,27 +45,48 @@ namespace Assets.Scripts
         private Vector3 _current;
         private List<TimeSample> movingCorr;
         private Queue<TimePoint> tpBuffer;
+        
 
         static bool copyinprogress;
 
         public string name { get; set; }
+        public float speed
+        {
+            get
+            {
+                if (go.GetComponent<LinearMovement>() != null)
+                {
+                    List<LinearMovement> atm = new List<LinearMovement>(go.GetComponents<LinearMovement>());
+                    return atm.Find(x => x.mainMovementAxis).speed;
+                }
+                else if (go.GetComponent<CircularMovement>() != null) return go.GetComponent<CircularMovement>().degPerSec;
+                else return 0;
+            }
+        }
         public List<TimePoint> trajectory { get; set; }
 
-
+        public trajectoryType myTrajectory;
 
         public MovingObject(GameObject go, int id, int trial)
         {
             this.go = go;
             trajectory = new List<TimePoint>();
             movingCorr = new List<TimeSample>();
+
+            myTrajectory = new trajectoryType();
+
             if (go != null)
             {
                 name = go.name;
                 if (id > 0 && id <= 10)
                 {
                     go.GetComponent<Renderer>().material.mainTexture = CreateNumberTexture.getNumberTexture(id);
-                    name = go.name + "Cube" + id;
+                    name = id+"";
                 }
+                // determine type of trajectory
+                if (go.GetComponent<LinearMovement>()) myTrajectory = trajectoryType.linear;
+                else if (go.GetComponent<CircularMovement>()) myTrajectory = trajectoryType.circular;
+                else myTrajectory = trajectoryType.none;
             }
             else name = "gaze";
 
@@ -66,14 +94,19 @@ namespace Assets.Scripts
             tpBuffer = new Queue<TimePoint>();
 
             positionWriter = new StreamWriter(logPath + @"\log_" + name + "_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-            positionWriter.WriteLine(name + "Timestamp;" + name + "XPos;" + name + "YPos;" + name + "newCorr;" + name + "smoothCorr");
+            positionWriter.WriteLine(getName() + "Timestamp;" + getName() + "XPos;" + getName() + "YPos;" + getName() + "newCorr;" + getName() + "smoothCorr");
             //positionWriter.WriteLine("nowTS;nowX;lastTS;lastX;pupilTS;scale");
             
-            
         }
+
+        public void startMoving()
+        {
+            foreach (LinearMovement lm in go.GetComponents<LinearMovement>()) lm.startMeUp();
+        }
+
         public string getName()
         {
-            return name;
+            return myTrajectory + name;
         }
 
         /// <summary>
@@ -227,13 +260,13 @@ namespace Assets.Scripts
 
         public void activate(bool active)
         {
-            Renderer r = this.go.GetComponent<Renderer>();
+            //Renderer r = this.go.GetComponent<Renderer>();
             // Halo Behavior must be added to GameObjects manually as there's no way doing this by script
             Behaviour halo = (Behaviour)go.GetComponent("Halo"); 
             if (active)
             {
                 //r.material.SetColor("_Color", Color.cyan);
-                halo.enabled = true;
+                // halo.enabled = true;
             }
             else
             {
@@ -271,5 +304,11 @@ namespace Assets.Scripts
         {
             return other.name == name;
         }
+
+        public bool Equals (String other)
+        {
+            return name == other;
+        }
+        
     }
 }

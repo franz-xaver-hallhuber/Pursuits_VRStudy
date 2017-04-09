@@ -28,11 +28,14 @@ public class Correlator : MonoBehaviour {
     private volatile bool _shouldStop;
 
     // logfiles
-    private StreamWriter correlationWriter;
+    private StreamWriter correlationWriter, selectionwriter;
     private String logFolder = "Logfiles";
 
     //TODO: während die objekte für die korrelation geklont werden, keine punkte hinzufügen, um inkonsistenzen zu vermeiden
     private bool _cloningInProgress, _spearmanIsRunning, _pearsonIsRunning;
+
+    // which object is the participant told to look at?
+    private int lookAt = 0;
 
     // Timespan to measure the duration of calculating a correlation factor for all objects in sceneObjects
     TimeSpan calcDur = new TimeSpan();
@@ -50,9 +53,16 @@ public class Correlator : MonoBehaviour {
         sceneObjects = new List<MovingObject>();
         gazeTrajectory = new MovingObject(null,0, trialNo);
         correlationWriter = new StreamWriter(logPath +  @"\log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+        selectionwriter = new StreamWriter(logPath + @"\log_Selection_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         // trajectoryWriter = new StreamWriter("log_Trajectories_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-        correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye");
-        //trajectoryWriter.WriteLine("Timestamp;xCube;xGaze;r");
+
+        // logfile for correlator: name of GameObject; timestamp; corr.value x; corr.value y; w; correlation frequency;
+        // selected correlation (Pearson/Spearman); source for gaze data (left/right/both);
+        correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye;");
+
+        // comparison of what is selected vs what the participant is told to look at
+        selectionwriter.WriteLine("Timestamp;Name;smoothCorrel;speed;task;selected;correlationToIntendedObject");
+
         // search for objects tagged 'Trackable', give them an ID and add them to the list
         int _newid = 1;
         foreach (GameObject go in GameObject.FindGameObjectsWithTag("Trackable")) register(go, _newid++);
@@ -107,7 +117,17 @@ public class Correlator : MonoBehaviour {
 
     // Update is called once per frame
     void Update () {
-        foreach (MovingObject mo in sceneObjects) mo.updatePosition();        
+        foreach (MovingObject mo in sceneObjects)
+        {
+            mo.updatePosition();
+            if (Input.anyKeyDown)
+            {
+                int _temp;
+                Int32.TryParse(Input.inputString, out _temp);
+                if (_temp > 0 && _temp < 10) lookAt = _temp;
+            }
+            if (Input.GetKeyDown(KeyCode.Space)) mo.startMoving();
+        }
     }
 
     
@@ -248,9 +268,8 @@ public class Correlator : MonoBehaviour {
 
                     // add result to the original list
                     results.Add((float)sceneObjects.Find(x => x.Equals(mo)).addSample(calcStart, (coeffX + coeffY) / 2, corrWindow));
-
-                    correlationWriter.WriteLine(mo.name + ";" + calcStart.TotalSeconds + ";" + coeffX + ";" + coeffY + ";" + w + ";" + corrWindow + ";" + corrFrequency + ";" + Coefficient + ";" + Gaze);
-       
+                    
+                    //correlationWriter.WriteLine(mo.name + ";" + calcStart.TotalSeconds + ";" + coeffX + ";" + coeffY + ";" + w + ";" + corrWindow + ";" + corrFrequency + ";" + Coefficient + ";" + Gaze);
                 }
                 catch (Exception e)
                 {
@@ -258,14 +277,39 @@ public class Correlator : MonoBehaviour {
                 }
             }
 
+            MovingObject intention = _tempObjects.Find(x => x.Equals(lookAt + ""));
+            string selection = "";
+
             //activate only one item at a time
             for (int i = 0; i < results.Count; i++)
             {
-                // activate the object with the highest correlation value only if it's above pearsonThreshold
-                if (results[i].CompareTo(results.Max()) == 0 && results[i] > threshold / 2)
+                // activate the object with the highest correlation value only if it's above threshold
+                if (results[i].CompareTo(results.Max()) == 0 && results[i] > threshold)
+                {
                     _tempObjects[i].activate(true); //doesn't matter if original or clone list is used as both refer to the same GameObject
+                                                    // if the wrong object is detected, calculate the correlation between the false object and the intended object
+                                                    //if (lookAt != 0)
+                                                    //{
+                                                    //selectionwriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + _tempObjects[i].name + ";" + lookAt + (_tempObjects[i].name.EndsWith(lookAt + "")
+                                                    //                        ? ";"
+                                                    //                        : ";" + resemblance(_tempObjects[i], _tempObjects.Find(x => x.Equals(lookAt + "")))));
+                                                    //}
+                                                    // else selectionwriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + _tempObjects[i].name + ";" + lookAt);
+                    selection = _tempObjects[i].name;
+                    // testing
+                }
                 else
+                {
                     _tempObjects[i].activate(false);
+                }
+
+                selectionwriter.WriteLine(calcStart.TotalSeconds + ";"
+                        + _tempObjects[i].name + ";"
+                        + results[i] + ";"
+                        + _tempObjects[i].speed + ";"
+                        + lookAt + ";"
+                        + selection + ";"
+                        + ((lookAt != 0 ) ? (resemblance(_tempObjects[i], intention).ToString()) : ""));
             }
 
             calcDur = PupilGazeTracker.Instance._globalTime - calcStart;
@@ -274,11 +318,23 @@ public class Correlator : MonoBehaviour {
         }
     }
     
+    private double resemblance(MovingObject wrong, MovingObject correct)
+    {
+        double pearsonX = Pearson.calculatePearson(wrong.getXPoints(), correct.getXPoints());
+        double pearsonY = Pearson.calculatePearson(wrong.getYPoints(), correct.getYPoints());
+
+        if (double.IsNaN(pearsonX)) { pearsonX = 0; }
+        if (double.IsNaN(pearsonY)) { pearsonY = 0; }
+
+        return ((pearsonX + pearsonY) / 2);
+    }
+
     private void OnDestroy()
     {
         _shouldStop = true;
         foreach (MovingObject mo in sceneObjects) mo.killMe();
         correlationWriter.Close();
+        selectionwriter.Close();
         gazeTrajectory.killMe();
         //trajectoryWriter.Close();
     }

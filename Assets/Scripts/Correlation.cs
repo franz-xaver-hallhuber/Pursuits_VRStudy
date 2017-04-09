@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace Correlation
 {
@@ -73,6 +74,8 @@ namespace Correlation
         public static double calculatePearson(List<double> a, List<double> b)
         {
             double zaehler = 0, nenner = 0, nenner1 = 0, nenner2 = 0;
+
+            // Debug.Log("Pearson List Difference: " + (a.Count - b.Count));
 
             for (int i = 0; i < Math.Min(a.Count, b.Count); i++)
             {
