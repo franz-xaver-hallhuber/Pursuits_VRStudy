@@ -266,7 +266,7 @@ namespace Assets.Scripts
             if (active)
             {
                 //r.material.SetColor("_Color", Color.cyan);
-                // halo.enabled = true;
+                halo.enabled = true;
             }
             else
             {
