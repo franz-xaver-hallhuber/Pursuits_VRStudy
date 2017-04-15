@@ -23,6 +23,8 @@ public class StudyMaster2000 : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+        combinations = new List<Trial>();
+
         // for the start just create a list with all combinations in random order
         foreach (float f in radii)
         {
@@ -31,12 +33,17 @@ public class StudyMaster2000 : MonoBehaviour {
                 combinations.Add(new Trial(f, g));
             }
         }
-
-        Random ran = new Random();
+        
         int n = combinations.Count;
         while (n>1) {
-
+            int k = Random.Range(0,n - 1);
+            Trial _t = combinations[k];
+            combinations[k] = combinations[n];
+            combinations[n] = _t;
+            n--;
         }
+
+        Debug.Log(combinations.ToString());  
 	}
 	
 	// Update is called once per frame
