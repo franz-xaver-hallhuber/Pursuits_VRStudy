@@ -67,6 +67,7 @@ namespace Assets.Scripts
 
         public trajectoryType myTrajectory;
 
+
         public MovingObject(GameObject go, int id, int trial)
         {
             this.go = go;

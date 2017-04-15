@@ -17,6 +17,8 @@ public class Correlator : MonoBehaviour {
     public float corrFrequency;
     public enum CorrelationMethod { Pearson, Spearman };
     public CorrelationMethod Coefficient;
+    public bool transparent = false;
+    public Color cubeBase;
 
     public int trialNo;
     // list, in which all trackable objects in the scene are stored
@@ -129,9 +131,7 @@ public class Correlator : MonoBehaviour {
             if (Input.GetKeyDown(KeyCode.Space)) mo.startMoving();
         }
     }
-
-    
-    
+        
     /// <summary>
     /// Convert GameObject to a MovingObject and add it to the list of traced Objects
     /// </summary>
@@ -329,13 +329,19 @@ public class Correlator : MonoBehaviour {
         return ((pearsonX + pearsonY) / 2);
     }
 
-    private void OnDestroy()
+    public int endTrial()
     {
         _shouldStop = true;
         foreach (MovingObject mo in sceneObjects) mo.killMe();
         correlationWriter.Close();
         selectionwriter.Close();
         gazeTrajectory.killMe();
+        return 0;
+    }
+
+    private void OnDestroy()
+    {
+        endTrial();
         //trajectoryWriter.Close();
     }
 
