@@ -97,9 +97,5 @@ public class LinearMovement : MonoBehaviour {
         UnityEditor.EditorApplication.isPlaying = false;
     }
 
-    public void startMeUp()
-    {
-        _shouldStart = true;
-    }
-    
+
 }

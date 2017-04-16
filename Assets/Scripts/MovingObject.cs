@@ -68,7 +68,7 @@ namespace Assets.Scripts
         public trajectoryType myTrajectory;
 
 
-        public MovingObject(GameObject go, int id, int trial)
+        public MovingObject(GameObject go, int id, int trial, string path)
         {
             this.go = go;
             trajectory = new List<TimePoint>();
@@ -81,20 +81,20 @@ namespace Assets.Scripts
                 name = go.name;
                 if (id > 0 && id <= 10)
                 {
-                    go.GetComponent<Renderer>().material.mainTexture = CreateNumberTexture.getNumberTexture(id);
+                    Material mat = go.GetComponent<Renderer>().material;
+                    mat.mainTexture = CreateNumberTexture.getNumberTexture(id,true);
                     name = id+"";
-                }
+                    }
                 // determine type of trajectory
                 if (go.GetComponent<LinearMovement>()) myTrajectory = trajectoryType.linear;
                 else if (go.GetComponent<CircularMovement>()) myTrajectory = trajectoryType.circular;
                 else myTrajectory = trajectoryType.none;
             }
             else name = "gaze";
-
-            string logPath = "Logfiles\\Participant" + trial + @"\" + SceneManager.GetActiveScene().name;
+            
             tpBuffer = new Queue<TimePoint>();
 
-            positionWriter = new StreamWriter(logPath + @"\log_" + name + "_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+            positionWriter = new StreamWriter(path + @"\log_" + name + "_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
             positionWriter.WriteLine(getName() + "Timestamp;" + getName() + "XPos;" + getName() + "YPos;" + getName() + "newCorr;" + getName() + "smoothCorr");
             //positionWriter.WriteLine("nowTS;nowX;lastTS;lastX;pupilTS;scale");
             
@@ -102,7 +102,9 @@ namespace Assets.Scripts
 
         public void startMoving()
         {
-            foreach (LinearMovement lm in go.GetComponents<LinearMovement>()) lm.startMeUp();
+            foreach (LinearMovement lm in go.GetComponents<LinearMovement>()) lm._shouldStart = true;
+            foreach (CircularMovement cm in go.GetComponents<CircularMovement>()) cm.shouldStart = true;
+            go.GetComponent<MeshRenderer>().enabled = true;
         }
 
         public string getName()
@@ -125,7 +127,11 @@ namespace Assets.Scripts
                 }
             }
         }
-
+        
+        public void setAim()
+        {
+            go.GetComponent<Renderer>().material.color = Color.red;
+        }
 
         void cleanUpCorr(int y)
         {
@@ -158,10 +164,10 @@ namespace Assets.Scripts
             List<double> coefficients = new List<double>();
             cleanUpCorr(y);
             foreach (TimeSample sample in movingCorr) coefficients.Add(sample.sample);
-            
-            positionWriter.WriteLine(ts.TotalSeconds + ";;;" + s + ";" + coefficients.Average());
+            double _average = (coefficients.Count > 0 ? coefficients.Average() : 0);
+            positionWriter.WriteLine(ts.TotalSeconds + ";;;" + s + ";" + _average);
             //Debug.Log("log:" + coefficients.Average());
-            return coefficients.Average();
+            return _average;
         }
 
         /// <summary>
@@ -285,6 +291,7 @@ namespace Assets.Scripts
         {
             positionWriter.Close();
             copyinprogress = false;
+            UnityEngine.Object.Destroy(go);
         }
 
         public object Clone()
