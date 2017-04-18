@@ -8,9 +8,12 @@ public class StudyMaster2001 : MonoBehaviour {
     
     public float radius, size;
     public string studyName;
-    public int numberOfTrials;
+    public int numberOfTrials, pinLength = 4;
+    public float waitForSecs = 1;
 
-    private List<int> pins;
+    private List<int> pins, result;
+
+    public Light highlight;
     
     public enum state
     {
@@ -24,7 +27,7 @@ public class StudyMaster2001 : MonoBehaviour {
 
     public state currentState { get; private set; }
     private string participant = "";
-    private int _currentRun = 0;
+    private int _currentRun = 0, _currentDigit = 0;
 
     private Correlator2 coco;
     private GameObject correlator;
@@ -110,7 +113,7 @@ public class StudyMaster2001 : MonoBehaviour {
         coco = correlator.AddComponent<Correlator2>();
 
         // set Correlator variables
-        coco.corrFrequency = 0.3f;
+        coco.corrFrequency = 0.05f; // in seconds, make sure this duration is longer than the average correlation cycle
         coco.w = 300;
         coco.corrWindow = 900;
         coco.threshold = 0.6;
@@ -124,26 +127,45 @@ public class StudyMaster2001 : MonoBehaviour {
         coco.startRightAway = false;
         coco.Init(studyName);
 
-        StartCoroutine(waitForCocoToFinish());        
+        StartCoroutine(giveCocoCracker());        
     }
 
-    IEnumerator waitForCocoToFinish()
+
+
+    IEnumerator giveCocoCracker()
     {
-        while (!coco._shouldStop) yield return null;
+        int _temp = pins[_currentRun];
+        List<int> digits = new List<int>();
+        while (_temp > 0)
+        {
+            digits.Add(_temp % 10);
+            _temp /= 10;
+        }
+        digits.Reverse();
+
+        for (int i=0;i<pinLength;i++)
+        {
+            result.Add(coco.clearTrajectories(digits[i]));
+            yield return new WaitForSeconds(waitForSecs);
+            StartCoroutine(Flash());
+        }
 
         coco.endTrial();
         coco.StopAllCoroutines();
         Destroy(coco);
         Destroy(correlator);
-        
+
         currentState = state.creatingObjects;
         createObjects();
+    }
 
+    private IEnumerator Flash()
+    {
+        throw new NotImplementedException();
     }
 
     internal void abortTrial()
     {
-        
         coco._shouldStop = true;
     }
 

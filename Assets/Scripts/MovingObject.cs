@@ -145,6 +145,11 @@ namespace Assets.Scripts
             }
         }
 
+        public void flush()
+        {
+            trajectory.Clear();
+        }
+
         /// <summary>
         /// Adds a new Correlation value to the list
         /// </summary>

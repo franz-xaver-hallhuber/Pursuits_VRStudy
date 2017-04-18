@@ -50,6 +50,9 @@ public class Correlator2 : MonoBehaviour {
     // variables to check whether a certain action is being performed
     private bool _cloningInProgress, _spearmanIsRunning, _pearsonIsRunning;
 
+    // name of the current selected object
+    string selection;
+
     // list, in which all trackable objects in the scene are stored
     List<MovingObject> sceneObjects;
 
@@ -232,6 +235,27 @@ public class Correlator2 : MonoBehaviour {
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="next"></param>
+    /// <returns></returns>
+    public int clearTrajectories(int next)
+    {
+        int _ret = Convert.ToInt32(selection);
+        StopAllCoroutines();
+
+        gazeTrajectory.flush();
+        foreach (MovingObject mo in sceneObjects)
+        {
+            mo.flush();
+        }
+
+        lookAt = next;
+        startCoroutine();
+        return _ret;
+    }
+
     IEnumerator startMovementOnReturn()
     {
         while (!startRightAway)
@@ -364,7 +388,7 @@ public class Correlator2 : MonoBehaviour {
             }
 
             MovingObject intention = _tempObjects.Find(x => x.Equals(lookAt + ""));
-            string selection = "";
+            selection = "";
 
             //activate only one item at a time
             for (int i = 0; i < results.Count; i++)
@@ -403,7 +427,7 @@ public class Correlator2 : MonoBehaviour {
             calcDur = PupilGazeTracker.Instance._globalTime - calcStart;
 
             //yield return new WaitForSeconds(corrFrequency - (float) calcDur.TotalSeconds); // calculation should take place every x seconds
-            yield return new WaitForSeconds(corrFrequency - (float)calcDur.TotalMilliseconds);
+            yield return new WaitForSeconds(corrFrequency - (float)calcDur.TotalSeconds);
         }
     }
     
