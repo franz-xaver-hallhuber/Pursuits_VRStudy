@@ -47,7 +47,7 @@ namespace Assets.Scripts
         private Queue<TimePoint> tpBuffer;
         
 
-        static bool copyinprogress;
+        static bool copyinprogress, updateinprogess;
 
         public string name { get; set; }
         public float speed
@@ -79,7 +79,7 @@ namespace Assets.Scripts
             if (go != null)
             {
                 name = go.name;
-                if (id > 0 && id <= 10)
+                if (id >= 0 && id <= 10)
                 {
                     Material mat = go.GetComponent<Renderer>().material;
                     mat.mainTexture = CreateNumberTexture.getNumberTexture(id,true);
@@ -217,9 +217,11 @@ namespace Assets.Scripts
 
                     else
                     {
+                        updateinprogess = true;
                         while (tpBuffer.Count > 0) trajectory.Add(tpBuffer.Dequeue());
                         trajectory.Add(new TimePoint(n - timeDelay, _correctedPos));
                         cleanUpTraj(w);
+                        updateinprogess = false;
                     }
                     
                 } catch (Exception e)
@@ -246,22 +248,29 @@ namespace Assets.Scripts
         public void addNewGaze(float timeDelay, Vector3 gazePoint, int w)
         {
             TimePoint tp = new TimePoint(now() - timeDelay, gazePoint);
-            trajectory.Add(tp);
-            positionWriter.WriteLine(tp.timestamp.TotalSeconds + ";" + gazePoint.x + ";" + gazePoint.y);
-            cleanUpTraj(w);
+            if (copyinprogress)
+            {
+                tpBuffer.Enqueue(tp);
+            } else
+            {
+                while (tpBuffer.Count > 0) trajectory.Add(tpBuffer.Dequeue());
+                trajectory.Add(tp);
+                positionWriter.WriteLine(tp.timestamp.TotalSeconds + ";" + gazePoint.x + ";" + gazePoint.y);
+                cleanUpTraj(w);
+            }
         }
 
         public List<double> getXPoints()
         {
             List<double> ret = new List<double>();
-            foreach (TimePoint tp in trajectory) ret.Add(tp.pos.x);
+            foreach (TimePoint tp in trajectory) if (tp != null) ret.Add(tp.pos.x);
             return ret;
         }
 
         public List<double> getYPoints()
         {
             List<double> ret = new List<double>();
-            foreach (TimePoint tp in trajectory) ret.Add(tp.pos.y);
+            foreach (TimePoint tp in trajectory) if (tp != null) ret.Add(tp.pos.y);
             return ret;
         }
 
@@ -296,13 +305,16 @@ namespace Assets.Scripts
 
         public object Clone()
         {
-            copyinprogress = true;
+            while (updateinprogess) { } // bad bad style
+            copyinprogress = true; // prevents trajectory list from being altered while creating copies
             MovingObject newMo = (MovingObject)this.MemberwiseClone();
             
             newMo.trajectory = new List<TimePoint>(this.trajectory);
             foreach (TimePoint tp in newMo.trajectory)
             {
-                positionWriter.WriteLine(tp.timestamp.TotalSeconds + ";" + tp.pos.x + ";" + tp.pos.y + ";;");
+                
+                if (tp != null) positionWriter.WriteLine(tp.timestamp.TotalSeconds + ";" + tp.pos.x + ";" + tp.pos.y + ";;");
+                
             }
             copyinprogress = false;
             return newMo;

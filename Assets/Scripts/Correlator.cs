@@ -13,7 +13,8 @@ public class Correlator : MonoBehaviour {
     public PupilGazeTracker.GazeSource Gaze;
     public double threshold;
     // w: time window for the correlation algorithm, corrWindow: time window in which correlation coefficients are averaged
-    public int w, corrWindow;
+    // timeframeCounter: duration in ms after which an object is selected in case of applyTimeframeCounter. 
+    public int w, corrWindow, timeframeCounter;
     public float corrFrequency;
     public enum CorrelationMethod { Pearson, Spearman };
     public CorrelationMethod Coefficient;
@@ -39,7 +40,7 @@ public class Correlator : MonoBehaviour {
     private bool _cloningInProgress, _spearmanIsRunning, _pearsonIsRunning;
 
     // which object is the participant told to look at?
-    private int lookAt = 0;
+    public int lookAt = 0;
 
     // Timespan to measure the duration of calculating a correlation factor for all objects in sceneObjects
     TimeSpan calcDur = new TimeSpan();
@@ -91,7 +92,7 @@ public class Correlator : MonoBehaviour {
     private void selectAim()
     {
         lookAt = UnityEngine.Random.Range(1, sceneObjects.Count);
-        sceneObjects[lookAt - 1].setAim();
+        sceneObjects[lookAt - 1].setAim(); //color the aim red
         
     }
 
@@ -358,22 +359,21 @@ public class Correlator : MonoBehaviour {
                 if (results[i].CompareTo(results.Max()) == 0 && results[i] > threshold)
                 {
                     if (enableHalo) _tempObjects[i].activate(true); //doesn't matter if original or clone list is used as both refer to the same GameObject
-                                                    // if the wrong object is detected, calculate the correlation between the false object and the intended object
-                                                    //if (lookAt != 0)
-                                                    //{
-                                                    //selectionwriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + _tempObjects[i].name + ";" + lookAt + (_tempObjects[i].name.EndsWith(lookAt + "")
-                                                    //                        ? ";"
-                                                    //                        : ";" + resemblance(_tempObjects[i], _tempObjects.Find(x => x.Equals(lookAt + "")))));
-                                                    //}
-                                                    // else selectionwriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + _tempObjects[i].name + ";" + lookAt);
+                                                                    // if the wrong object is detected, calculate the correlation between the false object and the intended object
+                                                                    //if (lookAt != 0)
+                                                                    //{
+                                                                    //selectionwriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + _tempObjects[i].name + ";" + lookAt + (_tempObjects[i].name.EndsWith(lookAt + "")
+                                                                    //                        ? ";"
+                                                                    //                        : ";" + resemblance(_tempObjects[i], _tempObjects.Find(x => x.Equals(lookAt + "")))));
+                                                                    //}
+                                                                    // else selectionwriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + _tempObjects[i].name + ";" + lookAt);
                     selection = _tempObjects[i].name;
-                    _shouldStop = true;
+                    // _shouldStop = true;
                     // testing
                 }
                 else
-                {
-                    if (enableHalo)_tempObjects[i].activate(false);
-                }
+                    if (enableHalo) _tempObjects[i].activate(false);
+                
 
                 selectionwriter.WriteLine(calcStart.TotalSeconds + ";"
                         + _tempObjects[i].name + ";"
@@ -388,7 +388,8 @@ public class Correlator : MonoBehaviour {
 
             calcDur = PupilGazeTracker.Instance._globalTime - calcStart;
 
-            yield return new WaitForSeconds(corrFrequency - (float) calcDur.TotalSeconds); // calculation should take place every x seconds
+            //yield return new WaitForSeconds(corrFrequency - (float) calcDur.TotalSeconds); // calculation should take place every x seconds
+            yield return null;
         }
     }
     

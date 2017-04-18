@@ -4,7 +4,10 @@
 		_MainTex ("Base (RGBA)", 2D) = "white" {}
 	}
 	SubShader {
-		Tags { "RenderType"="Opaque" }
+		Tags {
+		"RenderType"="Opaque"
+		"Queue" = "Overlay-1"
+	}
 		LOD 250
 		
 		CGPROGRAM
