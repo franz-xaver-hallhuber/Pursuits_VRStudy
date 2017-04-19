@@ -1,0 +1,13 @@
+Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye
+circCubeCube1;0;0;0;450;900;0.45;Pearson;BothEyes
+xCubeCube2;0;0;0;450;900;0.45;Pearson;BothEyes
+yCubeCube3;0;0;0;450;900;0.45;Pearson;BothEyes
+circCubeCube1;0.4592239;0;0;450;900;0.45;Pearson;BothEyes
+xCubeCube2;0.4592239;0;0;450;900;0.45;Pearson;BothEyes
+yCubeCube3;0.4592239;0;0;450;900;0.45;Pearson;BothEyes
+circCubeCube1;0.9169432;0;0;450;900;0.45;Pearson;BothEyes
+xCubeCube2;0.9169432;0;0;450;900;0.45;Pearson;BothEyes
+yCubeCube3;0.9169432;0;0;450;900;0.45;Pearson;BothEyes
+circCubeCube1;1.375164;0;0;450;900;0.45;Pearson;BothEyes
+xCubeCube2;1.375164;0;0;450;900;0.45;Pearson;BothEyes
+yCubeCube3;1.375164;0;0;450;900;0.45;Pearson;BothEyes

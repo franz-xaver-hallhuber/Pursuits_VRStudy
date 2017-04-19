@@ -67,7 +67,6 @@ namespace Assets.Scripts
 
         public trajectoryType myTrajectory;
 
-
         public MovingObject(GameObject go, int id, int trial, string path)
         {
             this.go = go;
@@ -85,6 +84,7 @@ namespace Assets.Scripts
                     mat.mainTexture = CreateNumberTexture.getNumberTexture(id,true);
                     name = id+"";
                     }
+
                 // determine type of trajectory
                 if (go.GetComponent<LinearMovement>()) myTrajectory = trajectoryType.linear;
                 else if (go.GetComponent<CircularMovement>()) myTrajectory = trajectoryType.circular;

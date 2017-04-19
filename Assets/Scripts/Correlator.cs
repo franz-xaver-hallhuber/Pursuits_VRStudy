@@ -34,7 +34,7 @@ public class Correlator : MonoBehaviour {
 
     // logfiles
     private StreamWriter correlationWriter, selectionwriter;
-    private String logFolder = "Logfiles";
+    private String logFolder = "Logfiles", selection = "";
 
     // TODO: während die objekte für die korrelation geklont werden, keine punkte hinzufügen, um inkonsistenzen zu vermeiden
     private bool _cloningInProgress, _spearmanIsRunning, _pearsonIsRunning;
@@ -340,7 +340,7 @@ public class Correlator : MonoBehaviour {
                     // add result to the original list
                     
                     results.Add((float)sceneObjects.Find(x => x.Equals(mo)).addSample(calcStart, (coeffX + coeffY) / 2, corrWindow));
-                    //Debug.Log("adding to results list: " + mo.name + "," + calcStart + "," + coeffX + "," + coeffY);
+                    // Debug.Log("adding to results list: " + mo.name + "," + calcStart + "," + coeffX + "," + coeffY);
                     //correlationWriter.WriteLine(mo.name + ";" + calcStart.TotalSeconds + ";" + coeffX + ";" + coeffY + ";" + w + ";" + corrWindow + ";" + corrFrequency + ";" + Coefficient + ";" + Gaze);
                 }
                 catch (Exception e)
@@ -350,7 +350,7 @@ public class Correlator : MonoBehaviour {
             }
 
             MovingObject intention = _tempObjects.Find(x => x.Equals(lookAt + ""));
-            string selection = "";
+            selection = "";
 
             //activate only one item at a time
             for (int i = 0; i < results.Count; i++)
@@ -368,6 +368,7 @@ public class Correlator : MonoBehaviour {
                                                                     //}
                                                                     // else selectionwriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + _tempObjects[i].name + ";" + lookAt);
                     selection = _tempObjects[i].name;
+                    _shouldStop = true;
                     // _shouldStop = true;
                     // testing
                 }
@@ -385,11 +386,11 @@ public class Correlator : MonoBehaviour {
             }
 
             _pearsonIsRunning = false;
-
+            
             calcDur = PupilGazeTracker.Instance._globalTime - calcStart;
 
-            //yield return new WaitForSeconds(corrFrequency - (float) calcDur.TotalSeconds); // calculation should take place every x seconds
-            yield return null;
+            yield return new WaitForSeconds(corrFrequency - (float) calcDur.TotalSeconds); // calculation should take place every x seconds
+           
         }
     }
     
@@ -404,7 +405,7 @@ public class Correlator : MonoBehaviour {
         return ((pearsonX + pearsonY) / 2);
     }
 
-    public int endTrial()
+    public string endTrial()
     {
         _shouldStop = true; // lets the coroutines finish
 
@@ -418,7 +419,7 @@ public class Correlator : MonoBehaviour {
         correlationWriter.Close();
         selectionwriter.Close();
         gazeTrajectory.killMe();
-        return 0;
+        return selection;
     }
 
     private void OnDestroy()

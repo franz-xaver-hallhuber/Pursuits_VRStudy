@@ -40,6 +40,7 @@ public class StudyMaster2000 : MonoBehaviour {
     private Correlator coco;
     private GameObject correlator;
     private bool _abort;
+    private string _lastEntry;
 
     // Use this for initialization
     void Start () {
@@ -81,7 +82,7 @@ public class StudyMaster2000 : MonoBehaviour {
 
     private void OnGUI()
     {
-        GUI.Box(new Rect(Screen.width-200, 0, 200, 40), currentState.ToString() + "\nParticipant No: " + participant);
+        GUI.Box(new Rect(Screen.width-200, 0, 200, 60), currentState.ToString() + "\nParticipant No: " + participant + "\nLastEntry: " + _lastEntry);
         if (currentState == state.waitingForUserInput)
         {
             GUI.Box(new Rect(Screen.width / 2 - 100, Screen.height / 2 - 100, 200, 200), "Enter Participant Number");
@@ -135,7 +136,7 @@ public class StudyMaster2000 : MonoBehaviour {
     private void startTrial()
     {
         correlator = new GameObject("Correlator");
-        coco = correlator.AddComponent<Correlator>();
+         coco = correlator.AddComponent<Correlator>();
 
         _abort = false;
 
@@ -143,7 +144,7 @@ public class StudyMaster2000 : MonoBehaviour {
         coco.corrFrequency = 0.3f;
         coco.w = 300;
         coco.corrWindow = 900;
-        coco.threshold = 0.8;
+        coco.threshold = 0.6;
         coco.Coefficient = Correlator.CorrelationMethod.Pearson;
         coco.transparent = true;
         coco.waitForInit = true;
@@ -157,11 +158,15 @@ public class StudyMaster2000 : MonoBehaviour {
         StartCoroutine(waitForCocoToFinish());        
     }
 
+    /// <summary>
+    /// If Correlator._shouldStop is true at some point, StudyMaster2000 will shut it down and load the next setting
+    /// </summary>
+    /// <returns></returns>
     IEnumerator waitForCocoToFinish()
     {
         while (!coco._shouldStop) yield return null;
 
-        coco.endTrial();
+        _lastEntry = coco.endTrial();
         coco.StopAllCoroutines();
         Destroy(coco);
         Destroy(correlator);
