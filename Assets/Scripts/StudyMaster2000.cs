@@ -151,7 +151,7 @@ public class StudyMaster2000 : MonoBehaviour {
         coco._shouldStop = false;
         coco.trialNo = Convert.ToInt32(participant);
         coco.selectAimAuto = true;
-        coco.enableHalo = false;
+        coco.enableHalo = true;
         coco.startRightAway = true;
         coco.Init(studyName);
 

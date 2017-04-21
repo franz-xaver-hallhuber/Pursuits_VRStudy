@@ -76,7 +76,10 @@ public class Correlator : MonoBehaviour {
 
             // search for objects tagged 'Trackable', give them an ID and add them to the list
             int _newid = 1;
-            foreach (GameObject go in GameObject.FindGameObjectsWithTag("Trackable")) register(go, _newid++);
+            foreach (GameObject go in GameObject.FindGameObjectsWithTag("Trackable"))
+            {
+                register(go, _newid++);
+            }
 
             // Set listener for new gaze points
             PupilGazeTracker.OnEyeGaze += new PupilGazeTracker.OnEyeGazeDeleg(UpdateTrajectories);

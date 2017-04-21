@@ -45,7 +45,7 @@ namespace Assets.Scripts
         private Vector3 _current;
         private List<TimeSample> movingCorr;
         private Queue<TimePoint> tpBuffer;
-        
+        public int counter = 0;
 
         static bool copyinprogress, updateinprogess;
 

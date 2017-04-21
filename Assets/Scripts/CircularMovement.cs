@@ -15,14 +15,27 @@ public class CircularMovement : MonoBehaviour {
     private double nextRad;
     private Vector3 localCenter;
     private Quaternion startRotation;
+    public bool waitForInit = true;
 
+    
+    // Use this for initialization
+    void Start () {
+        if (!waitForInit)
+        {
+            localCenter = transform.localPosition;
+            nextRad = Mathf.Deg2Rad * (randomStartPosition ? UnityEngine.Random.Range(0, 259) : startAngleDeg);
+            startRotation = transform.rotation;
+        }
+    }
 
-	// Use this for initialization
-	void Start () {
-
-        localCenter = transform.localPosition;
-        nextRad = Mathf.Deg2Rad * (randomStartPosition ? UnityEngine.Random.Range(0,259) : startAngleDeg);
-        startRotation = transform.rotation;
+    public void Init()
+    {
+        if (waitForInit)
+        {
+            localCenter = transform.localPosition;
+            nextRad = Mathf.Deg2Rad * (randomStartPosition ? UnityEngine.Random.Range(0, 259) : startAngleDeg);
+            startRotation = transform.rotation;
+        }
     }
     
 
@@ -56,7 +69,7 @@ public class CircularMovement : MonoBehaviour {
             // calculate next step
             degPerSec += accelerationPerSec * Time.deltaTime;
             nextRad += Mathf.Deg2Rad * (counterClockwise ? 1 : -1) * degPerSec * Time.deltaTime;
-            nextRad = (nextRad == Mathf.Abs(Mathf.PI * 2)) ? 0 : nextRad;
+            // nextRad = (nextRad == Mathf.Abs(Mathf.PI * 2)) ? 0 : nextRad;
 
             if (faceCenter)
                 transform.rotation = Quaternion.LookRotation(localCenter - transform.localPosition);

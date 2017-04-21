@@ -33,10 +33,13 @@ public class Correlator2 : MonoBehaviour {
     public Color cubeBase;
 
     // participant id
-    public int trialNo;
+    public int participantID;
 
     // if false, all coroutines terminate
     public volatile bool _shouldStop;
+
+    // if justCount: threshold after which an object is selected
+    public int counterThreshold;
 
     // which object is the participant told to look at
     public int lookAt = 0;
@@ -44,8 +47,12 @@ public class Correlator2 : MonoBehaviour {
     //set this to true when the Correlator object is created by script to allow further amendments befor routines are started
     public bool waitForInit = true; 
 
-    // if true select one object randomly and color it in red, works only with transparent = true
-    public bool selectAimAuto = false;
+    // if selectAimAuto: select one object randomly and color it in red, works only with transparent = true
+    // if justCount: increase the MovingObject's counter if it meets activation criteria
+    public bool selectAimAuto = false, justCount = false;
+
+    // if object has been detected
+    public bool weHaveAWinner;
 
     // variables to check whether a certain action is being performed
     private bool _cloningInProgress, _spearmanIsRunning, _pearsonIsRunning;
@@ -66,17 +73,17 @@ public class Correlator2 : MonoBehaviour {
     // Timespan to measure the duration of calculating a correlation factor for all objects in sceneObjects
     TimeSpan calcDur = new TimeSpan();
 
-    Coroutine pearson, spearman;
+    Coroutine correlationCoroutine;
     
     // Use this for initialization
     void Start () {
         if (!waitForInit)
         {
             sceneObjects = new List<MovingObject>();
-            logFolder = logFolder + @"\Participant" + trialNo + @"\" + SceneManager.GetActiveScene().name;
+            logFolder = logFolder + @"\Participant" + participantID + @"\" + SceneManager.GetActiveScene().name;
             Directory.CreateDirectory(logFolder);
             
-            gazeTrajectory = new MovingObject(null, 0, trialNo, logFolder);
+            gazeTrajectory = new MovingObject(null, 0, participantID, logFolder);
             correlationWriter = new StreamWriter(logFolder + @"\log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
             selectionwriter = new StreamWriter(logFolder + @"\log_Selection_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
             // trajectoryWriter = new StreamWriter("log_Trajectories_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
@@ -116,9 +123,9 @@ public class Correlator2 : MonoBehaviour {
     public void Init(string foldername)
     {
         sceneObjects = new List<MovingObject>();
-        logFolder = foldername + @"\Participant" + trialNo + @"\" + SceneManager.GetActiveScene().name;
+        logFolder = foldername + @"\Participant" + participantID + @"\" + SceneManager.GetActiveScene().name;
         Directory.CreateDirectory(logFolder);     
-        gazeTrajectory = new MovingObject(null, 0, trialNo, logFolder);
+        gazeTrajectory = new MovingObject(null, 0, participantID, logFolder);
 
         correlationWriter = new StreamWriter(logFolder + @"\log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         selectionwriter = new StreamWriter(logFolder + @"\log_Selection_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
@@ -170,6 +177,13 @@ public class Correlator2 : MonoBehaviour {
         return _ret;
     }
 
+    public void setAimAndStartCoroutine(int aim)
+    {
+        lookAt = aim;
+        _shouldStop = false;
+        startCoroutine();
+    }
+
     private void startCoroutine()
     {
         // start object movements depending on startRightAway
@@ -179,10 +193,10 @@ public class Correlator2 : MonoBehaviour {
         switch (Coefficient)
         {
             case (CorrelationMethod.Pearson):
-                pearson = StartCoroutine(CalculatePearson());
+                correlationCoroutine = StartCoroutine(CalculatePearson());
                 break;
             case (CorrelationMethod.Spearman):
-                spearman = StartCoroutine(CalculateSpearman());
+                correlationCoroutine = StartCoroutine(CalculateSpearman());
                 break;
         }
     }
@@ -210,7 +224,7 @@ public class Correlator2 : MonoBehaviour {
     /// <param name="go">GameObject to be traced</param>
     public void register(GameObject go, int id)
     {
-        sceneObjects.Add(new MovingObject(go,id,trialNo, logFolder));
+        sceneObjects.Add(new MovingObject(go,id,participantID, logFolder));
     }
 
     /// <summary>
@@ -240,10 +254,11 @@ public class Correlator2 : MonoBehaviour {
     /// </summary>
     /// <param name="next"></param>
     /// <returns></returns>
-    public int clearTrajectories(int next)
+    public int clearTrajectories()
     {
-        int _ret = Convert.ToInt32(selection);
-        StopAllCoroutines();
+        //StopAllCoroutines();
+        // Debug.Log("Stop Coroutines");
+        int _ret = Convert.ToInt32(getMaxCounter());
 
         gazeTrajectory.flush();
         foreach (MovingObject mo in sceneObjects)
@@ -251,9 +266,18 @@ public class Correlator2 : MonoBehaviour {
             mo.flush();
         }
 
-        lookAt = next;
-        startCoroutine();
-        return _ret;
+        selection = "";
+        
+        //startCoroutine();
+        return _ret; // make sure object names are only numbers
+    }
+
+    private string getMaxCounter()
+    {
+        KeyValuePair<string, int> _max = new KeyValuePair<string, int>("0",0);
+        foreach (MovingObject mo in sceneObjects) if (mo.counter > _max.Value) { _max = new KeyValuePair<string, int>(mo.name, mo.counter); };
+        //Debug.Log("Detected object was " + _max.Key + " Points: " + _max.Value);
+        return _max.Key;
     }
 
     IEnumerator startMovementOnReturn()
@@ -349,7 +373,7 @@ public class Correlator2 : MonoBehaviour {
 
             // work with copies to (hopefully) improve performance
             _cloningInProgress = true;
-            foreach (MovingObject mo in sceneObjects) _tempObjects.Add((MovingObject)mo.Clone()); //
+            foreach (MovingObject mo in sceneObjects) _tempObjects.Add((MovingObject)mo.Clone()); 
 
             MovingObject _tempGaze = (MovingObject) gazeTrajectory.Clone();
             _cloningInProgress = false;
@@ -375,6 +399,8 @@ public class Correlator2 : MonoBehaviour {
                     if (double.IsNaN(coeffX)) { coeffX = 0; }
                     if (double.IsNaN(coeffY)) { coeffY = 0; }
 
+                    if (_shouldStop) break;
+
                     // add result to the original list
                     
                     results.Add((float)sceneObjects.Find(x => x.Equals(mo)).addSample(calcStart, (coeffX + coeffY) / 2, corrWindow));
@@ -387,7 +413,9 @@ public class Correlator2 : MonoBehaviour {
                 }
             }
 
-            MovingObject intention = _tempObjects.Find(x => x.Equals(lookAt + ""));
+            if (_shouldStop) break;
+
+            //MovingObject intention = _tempObjects.Find(x => x.Equals(lookAt + ""));
             selection = "";
 
             //activate only one item at a time
@@ -405,29 +433,38 @@ public class Correlator2 : MonoBehaviour {
                                                                     //                        : ";" + resemblance(_tempObjects[i], _tempObjects.Find(x => x.Equals(lookAt + "")))));
                                                                     //}
                                                                     // else selectionwriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + _tempObjects[i].name + ";" + lookAt);
+                    if (justCount)
+                    {
+                        sceneObjects[i].counter++;
+                        if (sceneObjects[i].counter > counterThreshold)
+                        {
+                            _shouldStop = true;
+                        }
+                    }
+
                     selection = _tempObjects[i].name;
                     // _shouldStop = true;
                     // testing
                 }
                 else
                     if (enableHalo) _tempObjects[i].activate(false);
-                
+
 
                 selectionwriter.WriteLine(calcStart.TotalSeconds + ";"
                         + _tempObjects[i].name + ";"
                         + results[i] + ";"
                         + _tempObjects[i].speed + ";"
                         + lookAt + ";"
-                        + selection + ";"
-                        + ((lookAt != 0 ) ? (resemblance(_tempObjects[i], intention).ToString()) : ""));
+                        + selection); // + ";"
+                       // + ((lookAt != 0 ) ? (resemblance(_tempObjects[i], intention).ToString()) : ""));
             }
 
             _pearsonIsRunning = false;
 
             calcDur = PupilGazeTracker.Instance._globalTime - calcStart;
 
-            //yield return new WaitForSeconds(corrFrequency - (float) calcDur.TotalSeconds); // calculation should take place every x seconds
-            yield return new WaitForSeconds(corrFrequency - (float)calcDur.TotalSeconds);
+            // calculation should take place every corrFrequency seconds
+            yield return new WaitForSeconds(corrFrequency - (float)calcDur.TotalSeconds); 
         }
     }
     
@@ -448,7 +485,7 @@ public class Correlator2 : MonoBehaviour {
 
         PupilGazeTracker.OnEyeGaze -= new PupilGazeTracker.OnEyeGazeDeleg(UpdateTrajectories);
 
-        while (_pearsonIsRunning || _spearmanIsRunning) { };
+        // while (_pearsonIsRunning || _spearmanIsRunning) { };
 
         foreach (MovingObject mo in sceneObjects) mo.killMe();
         gazeTrajectory.killMe();
@@ -462,7 +499,6 @@ public class Correlator2 : MonoBehaviour {
     private void OnDestroy()
     {
         endTrial();
-        //trajectoryWriter.Close();
     }
 
     private void OnGUI()
@@ -472,7 +508,8 @@ public class Correlator2 : MonoBehaviour {
             string str = "Watched Objects: " + sceneObjects.Count;
             str += "\nTraj. Length: " + sceneObjects[0].trajectory.Count;
             str += "\nCorr Duration: " + calcDur.TotalMilliseconds + " ms";
-            GUI.TextArea(new Rect(200, 0, 200, 80), str);
+            str += "\nlook at: " + lookAt;
+            GUI.TextArea(new Rect(200, 0, 200, 100), str);
         }
     }
 }

@@ -9,9 +9,10 @@ public class StudyMaster2001 : MonoBehaviour {
     public float radius, size;
     public string studyName;
     public int numberOfTrials, pinLength = 4;
-    public float waitForSecs = 1;
+    public float timeoutSec = 5;
 
-    private List<int> pins, result;
+    private List<int> pins, result, digits;
+    private List<string> allResults;
 
     public Light highlight;
     
@@ -27,15 +28,21 @@ public class StudyMaster2001 : MonoBehaviour {
 
     public state currentState { get; private set; }
     private string participant = "";
+
+    // indices
     private int _currentRun = 0, _currentDigit = 0;
 
     private Correlator2 coco;
     private GameObject correlator;
+    public int counterThreshold;
 
     // Use this for initialization
     void Start () {
         currentState = state.cratingPins;
         pins = new List<int>();
+        result = new List<int>();
+        digits = new List<int>();
+        allResults = new List<string>();
         
         // for the start just create a list with all combinations in random order
         for (int i=0; i< numberOfTrials; i++)
@@ -50,7 +57,7 @@ public class StudyMaster2001 : MonoBehaviour {
 
     private void OnGUI()
     {
-        GUI.Box(new Rect(Screen.width-200, 0, 200, 40), currentState.ToString() + "\nParticipant No: " + participant);
+        GUI.Box(new Rect(Screen.width-200, 0, 200, 80), currentState.ToString() + "\nParticipant No: " + participant + "\nCurrent PIN: " + pins[_currentRun] +  "\nResult: " + resultAsString());
         if (currentState == state.waitingForUserInput)
         {
             GUI.Box(new Rect(Screen.width / 2 - 100, Screen.height / 2 - 100, 200, 200), "Enter Participant Number");
@@ -92,7 +99,6 @@ public class StudyMaster2001 : MonoBehaviour {
                 cm.radius = radius;
                 cm.shouldStart = false;
                 cm.counterClockwise = (i > 5 || i == 0);
-                
 
                 if (i == 0) break;
             }
@@ -104,38 +110,13 @@ public class StudyMaster2001 : MonoBehaviour {
         {
             currentState = state.studyOver;
         }
-        
     }
 
     private void startTrial()
     {
-        correlator = new GameObject("Correlator2");
-        coco = correlator.AddComponent<Correlator2>();
-
-        // set Correlator variables
-        coco.corrFrequency = 0.05f; // in seconds, make sure this duration is longer than the average correlation cycle
-        coco.w = 300;
-        coco.corrWindow = 900;
-        coco.threshold = 0.6;
-        coco.Coefficient = Correlator2.CorrelationMethod.Pearson;
-        coco.transparent = true;
-        coco.waitForInit = true;
-        coco._shouldStop = false;
-        coco.trialNo = Convert.ToInt32(participant);
-        coco.selectAimAuto = false;
-        coco.enableHalo = true;
-        coco.startRightAway = false;
-        coco.Init(studyName);
-
-        StartCoroutine(giveCocoCracker());        
-    }
-
-
-
-    IEnumerator giveCocoCracker()
-    {
+        // split up PIN
         int _temp = pins[_currentRun];
-        List<int> digits = new List<int>();
+        digits = new List<int>();
         while (_temp > 0)
         {
             digits.Add(_temp % 10);
@@ -143,25 +124,108 @@ public class StudyMaster2001 : MonoBehaviour {
         }
         digits.Reverse();
 
-        for (int i=0;i<pinLength;i++)
+        // create and configure correlator
+        correlator = new GameObject("Correlator2");
+        coco = correlator.AddComponent<Correlator2>();
+
+        // set Correlator variables
+        coco.corrFrequency = 0.08f; // in seconds, make sure this duration is longer than the average correlation cycle
+        coco.w = 300;
+        coco.corrWindow = 900;
+        coco.threshold = 0.6;
+        coco.Coefficient = Correlator2.CorrelationMethod.Pearson;
+        coco.transparent = true;
+        coco.waitForInit = true;
+        coco._shouldStop = false;
+        coco.participantID = Convert.ToInt32(participant);
+        coco.selectAimAuto = false;
+        coco.enableHalo = false;
+        coco.startRightAway = true;
+        coco.Gaze = PupilGazeTracker.GazeSource.BothEyes;
+        coco.counterThreshold = counterThreshold;
+        coco.justCount = true;
+        coco.Init(studyName);
+
+        StartCoroutine(FeedCoco());        
+    }
+
+    /// <summary>
+    /// Feeds the Correlator one digit at a time. Calls Correlator2.clearTrajectories either
+    /// if an object has been detected or the timeout has been reached.
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    IEnumerator FeedCoco()
+    {
+        result.Clear();
+
+        for (_currentDigit = 0; _currentDigit < pinLength; _currentDigit++)
         {
-            result.Add(coco.clearTrajectories(digits[i]));
-            yield return new WaitForSeconds(waitForSecs);
+            float start = Time.realtimeSinceStartup;
+            //Debug.Log("Started Correlator for digit " + _currentDigit);
+            coco.setAimAndStartCoroutine(digits[_currentDigit]);
+            
+            while (!coco._shouldStop) // _shouldStop turns true if object was selected
+            {
+                if (Time.realtimeSinceStartup - start > timeoutSec)
+                {
+                    //Debug.Log("Reached time limit");
+                    coco._shouldStop = true;
+                    break;
+                }
+                yield return new WaitForSeconds(0.2f);
+            }
+            result.Add(coco.clearTrajectories());
             StartCoroutine(Flash());
+            yield return new WaitForSeconds(0.5f);
         }
 
-        coco.endTrial();
-        coco.StopAllCoroutines();
+        allResults.Add(resultAsString());
+
+        
+
+        coco.endTrial(); // also kills all "Trackable"-tagged GameObjects
+        coco.StopAllCoroutines(); // they stop anyway when _shouldStop is set to true, but to be sure..
         Destroy(coco);
         Destroy(correlator);
+
+        // reset variables
+        _currentRun++;
+        _currentDigit = 0;
 
         currentState = state.creatingObjects;
         createObjects();
     }
 
+    private string resultAsString()
+    {
+        string _ret = "";
+        foreach (int i in result)
+        {
+            _ret += i;
+        }
+        return _ret;
+    }
+
+    /// <summary>
+    /// Flashes the attached Highlight. Important: Set Baking to realtime and Render Mode to important
+    /// </summary>
     private IEnumerator Flash()
     {
-        throw new NotImplementedException();
+        float flashtimeSec = 0.5f;
+        bool up = true;
+        while (up)
+        {
+            highlight.GetComponent<Light>().intensity += Time.deltaTime * 8 * (1/flashtimeSec);
+            if (highlight.GetComponent<Light>().intensity >= 8) up = false;
+            yield return null;
+        }
+        while (!up)
+        {
+            highlight.GetComponent<Light>().intensity -= Time.deltaTime * 8 * (1/flashtimeSec);
+            if (highlight.GetComponent<Light>().intensity <= 0) break;
+            yield return null;
+        }
     }
 
     internal void abortTrial()
