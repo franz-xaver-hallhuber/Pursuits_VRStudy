@@ -61,7 +61,7 @@ public class CorrelatorMeteor : MonoBehaviour {
     string selection;
 
     // list, in which all trackable objects in the scene are stored
-    List<MovingObject> sceneObjects;
+    List<MovingMeteor> sceneObjects;
 
     // object, in which the gaze trajectory is stored
     MovingObject gazeTrajectory;
@@ -77,43 +77,19 @@ public class CorrelatorMeteor : MonoBehaviour {
     
     // Use this for initialization
     void Start () {
-        if (!waitForInit)
-        {
-            sceneObjects = new List<MovingObject>();
-            logFolder = logFolder + @"\Participant" + participantID + @"\" + SceneManager.GetActiveScene().name;
-            Directory.CreateDirectory(logFolder);
-            
-            gazeTrajectory = new MovingObject(null, 0, participantID, logFolder);
-            correlationWriter = new StreamWriter(logFolder + @"\log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-            selectionwriter = new StreamWriter(logFolder + @"\log_Selection_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-            // trajectoryWriter = new StreamWriter("log_Trajectories_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-
-            // logfile for correlator: name of GameObject; timestamp; corr.value x; corr.value y; w; correlation frequency;
-            // selected correlation (Pearson/Spearman); source for gaze data (left/right/both);
-            correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye;");
-
-            // comparison of what is selected vs what the participant is told to look at
-            selectionwriter.WriteLine("Timestamp;Name;smoothCorrel;speed;task;selected;correlationToIntendedObject");
-
-            // search for objects tagged 'Trackable', give them an ID and add them to the list
-            int _newid = 1;
-            foreach (GameObject go in GameObject.FindGameObjectsWithTag("Trackable")) register(go, _newid++);
-
-            // Set listener for new gaze points
-            PupilGazeTracker.OnEyeGaze += new PupilGazeTracker.OnEyeGazeDeleg(UpdateTrajectories);
-
-            // start the selected correlation coroutine
-            startCoroutine();
-        }
-
-        if (selectAimAuto) selectAim();
+       
         
 	}
 
-    private void selectAim()
+    public void selectAim()
     {
-        lookAt = UnityEngine.Random.Range(1, sceneObjects.Count);
-        sceneObjects[lookAt - 1].setAim(); //color the aim red
+        bool sceneHasAim = false;
+        foreach (MovingMeteor mm in sceneObjects) sceneHasAim = sceneHasAim || mm.aim;
+        if (!sceneHasAim)
+        {
+            lookAt = UnityEngine.Random.Range(1, sceneObjects.Count);
+            sceneObjects[lookAt - 1].setAim(); //color the aim red
+        }
     }
 
     /// <summary>
@@ -122,7 +98,7 @@ public class CorrelatorMeteor : MonoBehaviour {
     /// <param name="foldername">Name of the folder in which logfiles are stored. Folder structure will be <paramref name="foldername"/>\Participant{trialNo}\{SceneName}\lox_{xxx}</param>
     public void Init(string foldername)
     {
-        sceneObjects = new List<MovingObject>();
+        sceneObjects = new List<MovingMeteor>();
         logFolder = foldername + @"\Participant" + participantID + @"\" + SceneManager.GetActiveScene().name;
         Directory.CreateDirectory(logFolder);     
         gazeTrajectory = new MovingObject(null, 0, participantID, logFolder);
@@ -136,58 +112,26 @@ public class CorrelatorMeteor : MonoBehaviour {
 
         // comparison of what is selected vs what the participant is told to look at
         selectionwriter.WriteLine("Timestamp;Name;smoothCorrel;speed;task;selected;correlationToIntendedObject");
+        
+        
+    }
+    
 
-        // search for objects tagged 'Trackable', give them an ID and add them to the list
-        // int _newid = 0;#
-        // IMPORTANT: give the object its number as its name
-        foreach (GameObject go in GameObject.FindGameObjectsWithTag("Trackable")) register(go,Convert.ToInt32(go.name));
+    public void setAimAndStartCoroutine()
+    {
+        selectAim();
+        _shouldStop = false;
+        startCorrelationCoroutine();
 
         // Set listener for new gaze points
         PupilGazeTracker.OnEyeGaze += new PupilGazeTracker.OnEyeGazeDeleg(UpdateTrajectories);
-
-        // start the selected correlation coroutine
-        startCoroutine();
     }
+
     
-    /// <summary>
-    /// Generates new Participant ID
-    /// </summary>
-    /// <returns>New Participant ID</returns>
-    private int doLoggingStuff()
-    {
-        Directory.CreateDirectory(logFolder);
-
-        int _ret;
-        if (File.Exists("last"))
-        {
-            StreamReader trialReader = new StreamReader(logFolder + @"\last");
-            _ret = Int32.Parse(trialReader.ReadLine());
-            trialReader.Close();
-            File.Delete(logFolder + @"\last");
-            _ret++;
-        }
-        else { _ret = 1; }
-
-        StreamWriter trialWriter = new StreamWriter(logFolder + @"\last");
-        trialWriter.Write(_ret);
-        trialWriter.Close();
-
-        Directory.CreateDirectory(logFolder + @"\Participant" + _ret);
-
-        return _ret;
-    }
-
-    public void setAimAndStartCoroutine(int aim)
-    {
-        lookAt = aim;
-        _shouldStop = false;
-        startCoroutine();
-    }
-
-    private void startCoroutine()
+    private void startCorrelationCoroutine()
     {
         // start object movements depending on startRightAway
-        if (startRightAway) foreach (MovingObject mo in sceneObjects) mo.startMoving();
+        if (startRightAway) foreach (MovingMeteor mo in sceneObjects) mo.startMoving();
         else StartCoroutine(startMovementOnReturn());
 
         switch (Coefficient)
@@ -203,18 +147,9 @@ public class CorrelatorMeteor : MonoBehaviour {
 
     // Update is called once per frame
     void Update () {
-        foreach (MovingObject mo in sceneObjects)
+        foreach (MovingMeteor mo in sceneObjects)
         {
             mo.updatePosition();
-            if (!selectAimAuto)
-            {
-                if (Input.anyKeyDown)
-                {
-                    int _temp;
-                    Int32.TryParse(Input.inputString, out _temp);
-                    if (_temp > 0 && _temp < 10) lookAt = _temp;
-                }
-            }
         }
     }
         
@@ -224,7 +159,8 @@ public class CorrelatorMeteor : MonoBehaviour {
     /// <param name="go">GameObject to be traced</param>
     public void register(GameObject go, int id)
     {
-        sceneObjects.Add(new MovingObject(go,id,participantID, logFolder));
+        sceneObjects.Add(new MovingMeteor(go,id,participantID, logFolder));
+        selectAim();
     }
 
     /// <summary>
@@ -244,7 +180,7 @@ public class CorrelatorMeteor : MonoBehaviour {
             gazeTrajectory.addNewGaze(newgaze.z, newgaze, w);
 
             // add positions at the moment of _correctedTs to all MovingObjects' trajectories
-            foreach (MovingObject mo in sceneObjects)
+            foreach (MovingMeteor mo in sceneObjects)
                 mo.addNewPosition(newgaze.z, w);
         }
     }
@@ -261,7 +197,7 @@ public class CorrelatorMeteor : MonoBehaviour {
         int _ret = Convert.ToInt32(getMaxCounter());
 
         gazeTrajectory.flush();
-        foreach (MovingObject mo in sceneObjects)
+        foreach (MovingMeteor mo in sceneObjects)
         {
             mo.flush();
         }
@@ -275,7 +211,7 @@ public class CorrelatorMeteor : MonoBehaviour {
     private string getMaxCounter()
     {
         KeyValuePair<string, int> _max = new KeyValuePair<string, int>("0",0);
-        foreach (MovingObject mo in sceneObjects) if (mo.counter > _max.Value) { _max = new KeyValuePair<string, int>(mo.name, mo.counter); };
+        foreach (MovingMeteor mo in sceneObjects) if (mo.counter > _max.Value) { _max = new KeyValuePair<string, int>(mo.name, mo.counter); };
         //Debug.Log("Detected object was " + _max.Key + " Points: " + _max.Value);
         return _max.Key;
     }
@@ -287,7 +223,7 @@ public class CorrelatorMeteor : MonoBehaviour {
             if (Input.GetKeyDown(KeyCode.Return))
             {
                 startRightAway = true;
-                foreach (MovingObject mo in sceneObjects) mo.startMoving();
+                foreach (MovingMeteor mo in sceneObjects) mo.startMoving();
             }
             yield return null;
         }
@@ -302,9 +238,9 @@ public class CorrelatorMeteor : MonoBehaviour {
             TimeSpan calcStart = new TimeSpan();
             calcStart = PupilGazeTracker.Instance._globalTime;
 
-            List<MovingObject> _tempObjects = new List<MovingObject>();
+            List<MovingMeteor> _tempObjects = new List<MovingMeteor>();
             _cloningInProgress = true;
-            foreach (MovingObject mo in sceneObjects) _tempObjects.Add((MovingObject)mo.Clone()); //work on a copy to (hopefully) improve performance
+            foreach (MovingMeteor mo in sceneObjects) _tempObjects.Add((MovingMeteor)mo.Clone()); //work on a copy to (hopefully) improve performance
 
             MovingObject _tempGaze = (MovingObject)gazeTrajectory.Clone();
             _cloningInProgress = false;
@@ -317,7 +253,7 @@ public class CorrelatorMeteor : MonoBehaviour {
 
             List<float> results = new List<float>();
 
-            foreach (MovingObject mo in _tempObjects)
+            foreach (MovingMeteor mo in _tempObjects)
             {
                 // temporary list for not having to generate a new one at every loop
                 List<double> _tempXPObj = new List<double>(mo.getXPoints());
@@ -369,11 +305,11 @@ public class CorrelatorMeteor : MonoBehaviour {
             TimeSpan calcStart = new TimeSpan();
             calcStart = PupilGazeTracker.Instance._globalTime;
 
-            List<MovingObject> _tempObjects = new List<MovingObject>();
+            List<MovingMeteor> _tempObjects = new List<MovingMeteor>();
 
             // work with copies to (hopefully) improve performance
             _cloningInProgress = true;
-            foreach (MovingObject mo in sceneObjects) _tempObjects.Add((MovingObject)mo.Clone()); 
+            foreach (MovingMeteor mo in sceneObjects) _tempObjects.Add((MovingMeteor)mo.Clone()); 
 
             MovingObject _tempGaze = (MovingObject) gazeTrajectory.Clone();
             _cloningInProgress = false;
@@ -383,7 +319,7 @@ public class CorrelatorMeteor : MonoBehaviour {
 
             List<float> results = new List<float>();
 
-            foreach (MovingObject mo in _tempObjects)
+            foreach (MovingMeteor mo in _tempObjects)
             {
                 // temporary list for not having to generate a new one at every loop
                 List<double> _tempXPObj = new List<double>(mo.getXPoints());
@@ -402,7 +338,7 @@ public class CorrelatorMeteor : MonoBehaviour {
                     if (_shouldStop) break;
 
                     // add result to the original list
-                    
+                    //Debug.Log("adding to results list: " + mo.name + "," + calcStart + "," + coeffX + "," + coeffY);
                     results.Add((float)sceneObjects.Find(x => x.Equals(mo)).addSample(calcStart, (coeffX + coeffY) / 2, corrWindow));
                     //Debug.Log("adding to results list: " + mo.name + "," + calcStart + "," + coeffX + "," + coeffY);
                     //correlationWriter.WriteLine(mo.name + ";" + calcStart.TotalSeconds + ";" + coeffX + ";" + coeffY + ";" + w + ";" + corrWindow + ";" + corrFrequency + ";" + Coefficient + ";" + Gaze);
@@ -438,7 +374,13 @@ public class CorrelatorMeteor : MonoBehaviour {
                         sceneObjects[i].counter++;
                         if (sceneObjects[i].counter > counterThreshold)
                         {
-                            _shouldStop = true;
+                            MovingMeteor mm = sceneObjects[i];
+                            mm.activate(true);
+                            clearTrajectories();
+                            sceneObjects.Remove(mm);
+
+                            yield return new WaitForSeconds(3);
+                            mm.killMe();
                         }
                     }
 
@@ -487,7 +429,7 @@ public class CorrelatorMeteor : MonoBehaviour {
 
         // while (_pearsonIsRunning || _spearmanIsRunning) { };
 
-        foreach (MovingObject mo in sceneObjects) mo.killMe();
+        foreach (MovingMeteor mo in sceneObjects) mo.killMe();
         gazeTrajectory.killMe();
 
         correlationWriter.Close();

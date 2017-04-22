@@ -9,17 +9,26 @@ namespace Assets.Scripts
 {
     
 
-    public class MovingMeteor : ICloneable, IEquatable<MovingObject>
+    public class MovingMeteor : ICloneable, IEquatable<MovingMeteor>
     {
         GameObject go;
         private StreamWriter positionWriter;
         private Vector3 _current;
         private List<TimeSample> movingCorr;
         private Queue<TimePoint> tpBuffer;
+        private bool IAmTarget;
         public int counter = 0;
         
         static bool copyinprogress, updateinprogess;
         public GameObject myExplosion;
+        public bool aim { get
+            {
+                return IAmTarget;
+            }
+            set
+            {
+                setAim();
+            } }
 
         public string name { get; set; }
         public float speed
@@ -52,7 +61,7 @@ namespace Assets.Scripts
                 name = go.name;
                 if (id >= 0 && id <= 10)
                 {
-                    Material mat = go.GetComponent<Renderer>().material;
+                    Material mat = go.GetComponentInChildren<Renderer>().material;
                     //mat.mainTexture = CreateNumberTexture.getNumberTexture(id,true);
                     mat.color = Color.blue;
                     name = id+"";
@@ -66,18 +75,19 @@ namespace Assets.Scripts
             else name = "gaze";
             
             tpBuffer = new Queue<TimePoint>();
-
+            
             positionWriter = new StreamWriter(path + @"\log_" + name + "_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
             positionWriter.WriteLine(getName() + "Timestamp;" + getName() + "XPos;" + getName() + "YPos;" + getName() + "newCorr;" + getName() + "smoothCorr");
             //positionWriter.WriteLine("nowTS;nowX;lastTS;lastX;pupilTS;scale");
-            
+
+            myExplosion = go.transform.GetChild(1).gameObject;
         }
 
         public void startMoving()
         {
             foreach (LinearMovement lm in go.GetComponents<LinearMovement>()) lm._shouldStart = true;
             foreach (CircularMovement cm in go.GetComponents<CircularMovement>()) cm.shouldStart = true;
-            go.GetComponent<MeshRenderer>().enabled = true;
+            go.GetComponentInChildren<MeshRenderer>().enabled = true;
         }
 
         public string getName()
@@ -103,7 +113,8 @@ namespace Assets.Scripts
         
         public void setAim()
         {
-            go.GetComponent<Renderer>().material.color = Color.red;
+            go.GetComponentInChildren<Renderer>().material.color = Color.red;
+            IAmTarget = true;
         }
 
         void cleanUpCorr(int y)
@@ -263,6 +274,7 @@ namespace Assets.Scripts
                 //r.material.SetColor("_Color", Color.cyan);
                 //halo.enabled = true;
                 myExplosion.SetActive(true);
+                go.transform.GetChild(0).gameObject.SetActive(false);
             }
             else
             {
@@ -287,7 +299,7 @@ namespace Assets.Scripts
         {
             while (updateinprogess) { } // bad bad style
             copyinprogress = true; // prevents trajectory list from being altered while creating copies
-            MovingObject newMo = (MovingObject)this.MemberwiseClone();
+            MovingMeteor newMo = (MovingMeteor)this.MemberwiseClone();
             
             newMo.trajectory = new List<TimePoint>(this.trajectory);
             foreach (TimePoint tp in newMo.trajectory)
@@ -300,7 +312,7 @@ namespace Assets.Scripts
             return newMo;
         }
 
-        public bool Equals(MovingObject other)
+        public bool Equals(MovingMeteor other)
         {
             return other.name == name;
         }

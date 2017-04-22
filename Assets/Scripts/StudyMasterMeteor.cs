@@ -32,6 +32,7 @@ public class StudyMasterMeteor : MonoBehaviour {
     private GameObject correlator;
     public float refreshRateSec;
     public GameObject eyeCam;
+    private int meteorCounter=0;
 
     // Use this for initialization
     void Start () {
@@ -89,6 +90,7 @@ public class StudyMasterMeteor : MonoBehaviour {
                     _newMeteor.transform.localPosition = new Vector3(_newCenter.x,_newCenter.y, 6+_newCenter.z); // because Instantiate location is global
                     _newMeteor.tag = "Trackable";
                     _newMeteor.transform.localScale = new Vector3(_scale, _scale, _scale);
+                    _newMeteor.name = meteorCounter++.ToString();
                     
                     CircularMovement _newMove = _newMeteor.AddComponent<CircularMovement>();
                     _newMove.counterClockwise = counter;
@@ -98,6 +100,8 @@ public class StudyMasterMeteor : MonoBehaviour {
                     _newMove.rotationAxis = CircularMovement.RotationAxis.zAxis;
                     _newMove.Init();
                     _newMove.shouldStart = true;
+
+                    coco.register(_newMeteor, Convert.ToInt32(_newMeteor.name));
                 }
                 yield return new WaitForSeconds(refreshRateSec);
             }
@@ -108,8 +112,7 @@ public class StudyMasterMeteor : MonoBehaviour {
 
     private void startGame()
     {
-        StartCoroutine(createMeteors());
-
+        
         correlator = new GameObject("CorrelatorMeteor");
         coco = correlator.AddComponent<CorrelatorMeteor>();
 
@@ -120,13 +123,17 @@ public class StudyMasterMeteor : MonoBehaviour {
         coco.threshold = 0.6;
         coco.Coefficient = CorrelatorMeteor.CorrelationMethod.Pearson;
         coco.waitForInit = true;
-        coco._shouldStop = false;
+        coco._shouldStop = true;
         coco.participantID = Convert.ToInt32(participant);
-        coco.selectAimAuto = false;
         coco.enableHalo = false;
         coco.startRightAway = true;
         coco.Gaze = PupilGazeTracker.GazeSource.BothEyes;
         coco.justCount = true;
+        coco.counterThreshold = 20;
         coco.Init(studyName);
+
+        StartCoroutine(createMeteors());
+
+        coco.setAimAndStartCoroutine();
     }
 }
