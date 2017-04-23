@@ -397,7 +397,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   studyName: PursuitsShooter
-  timeout: 60
+  timeout: 120
   maxNumberOfMeteors: 10
   meteorPrefab: {fileID: 134367156}
   refreshRateSec: 1
@@ -661,11 +661,11 @@ Prefab:
     - target: {fileID: 3380982, guid: 4d293c8e162f3874b982baadd71153d2, type: 2}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: 1490875720}
+      objectReference: {fileID: 1816396594}
     - target: {fileID: 2348914, guid: 4d293c8e162f3874b982baadd71153d2, type: 2}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 1631250809}
+      objectReference: {fileID: 1472384723}
     - target: {fileID: 146900, guid: 4d293c8e162f3874b982baadd71153d2, type: 2}
       propertyPath: m_IsActive
       value: 1
@@ -1063,6 +1063,15 @@ Prefab:
       propertyPath: m_LocalScale.z
       value: 0.24417444
       objectReference: {fileID: 0}
+    - target: {fileID: 111000011087569900, guid: 6747b1742d70743a8aff8594e708b2f7,
+        type: 2}
+      propertyPath: m_AnimatePhysics
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000011869266182, guid: 6747b1742d70743a8aff8594e708b2f7, type: 2}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 6747b1742d70743a8aff8594e708b2f7, type: 2}
   m_IsPrefabParent: 0
@@ -1125,7 +1134,64 @@ Prefab:
 Transform:
   m_PrefabParentObject: {fileID: 400000, guid: 750dd6acbb669b14c8866acddb1bf76f, type: 3}
   m_PrefabInternal: {fileID: 1293360595}
---- !u!43 &1490875720
+--- !u!21 &1472384723
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: Sprites/Default
+  m_Shader: {fileID: 10753, guid: 0000000000000000f000000000000000, type: 0}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _AlphaTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - PixelSnap: 0
+    - _EnableExternalAlpha: 0
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Flip: {r: 1, g: 1, b: 1, a: 1}
+    - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
+--- !u!1 &1679504712 stripped
+GameObject:
+  m_PrefabParentObject: {fileID: 100000, guid: 750dd6acbb669b14c8866acddb1bf76f, type: 3}
+  m_PrefabInternal: {fileID: 1293360595}
+--- !u!114 &1679504716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1679504712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d1ed73fde8d5c241a8617daf1667c52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  radius: 0
+  startAngleDeg: 0
+  degPerSec: 0
+  accelerationPerSec: 0
+  counterClockwise: 0
+  faceCenter: 0
+  randomStartPosition: 0
+  shouldStart: 0
+  rotationAxis: 2
+  waitForInit: 1
+--- !u!43 &1816396594
 Mesh:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
@@ -1253,63 +1319,6 @@ Mesh:
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
   m_MeshOptimized: 0
---- !u!21 &1631250809
-Material:
-  serializedVersion: 6
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_Name: Sprites/Default
-  m_Shader: {fileID: 10753, guid: 0000000000000000f000000000000000, type: 0}
-  m_ShaderKeywords: 
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _AlphaTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Floats:
-    - PixelSnap: 0
-    - _EnableExternalAlpha: 0
-    m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Flip: {r: 1, g: 1, b: 1, a: 1}
-    - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
---- !u!1 &1679504712 stripped
-GameObject:
-  m_PrefabParentObject: {fileID: 100000, guid: 750dd6acbb669b14c8866acddb1bf76f, type: 3}
-  m_PrefabInternal: {fileID: 1293360595}
---- !u!114 &1679504716
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1679504712}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5d1ed73fde8d5c241a8617daf1667c52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  radius: 0
-  startAngleDeg: 0
-  degPerSec: 0
-  accelerationPerSec: 0
-  counterClockwise: 0
-  faceCenter: 0
-  randomStartPosition: 0
-  shouldStart: 0
-  rotationAxis: 2
-  waitForInit: 1
 --- !u!1 &2104938325
 GameObject:
   m_ObjectHideFlags: 0
