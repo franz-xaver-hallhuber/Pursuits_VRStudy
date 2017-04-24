@@ -5,11 +5,11 @@
 	}
 	SubShader {
 		Tags {
-		"RenderType"="Opaque"
-		"Queue" = "Overlay-1"
-	}
+			"RenderType"="Opaque"
+			"Queue" = "Overlay+1000"
+		}
 		LOD 250
-		
+
 		CGPROGRAM
 		// Physically based Standard lighting model, and enable shadows on all light types
 		#pragma surface surf Lambert
@@ -18,7 +18,9 @@
 		#pragma target 3.0
 
 		sampler2D _MainTex;
-	fixed4 _Color;
+		fixed4 _Color;
+
+		
 
 		struct Input {
 			float2 uv_MainTex;
