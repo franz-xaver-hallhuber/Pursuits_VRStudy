@@ -136,6 +136,8 @@ public class StudyMasterMeteor : MonoBehaviour {
         coco.Init(studyName);
 
         StartCoroutine(createMeteors());
+        GetComponent<WalkingTask>().Init();
+        StartCoroutine(GetComponent<WalkingTask>().RunWalkingTask());
 
         coco.setAimAndStartCoroutine();
     }

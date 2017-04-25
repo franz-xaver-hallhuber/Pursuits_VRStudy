@@ -36,13 +36,12 @@ public class WalkingTask : MonoBehaviour {
 	public IEnumerator RunWalkingTask () {
         plane.GetComponent<MeshRenderer>().enabled = true;
 
-        while (GetComponent<StudyMaster2000>().currentState != StudyMaster2000.state.studyOver)
+        while (GetComponent<StudyMasterMeteor>().currentState != StudyMasterMeteor.state.gameOver)
         {
             if (reachedDestination())
             {
                 Vector2 newXZ = q.getNextPosition(new Vector2(plane.transform.position.x, plane.transform.position.z));
                 plane.transform.position = new Vector3(newXZ.x, 0, newXZ.y);
-                GetComponent<StudyMaster2000>().abortTrial();
             }
             yield return null;
         }
