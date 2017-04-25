@@ -129,7 +129,7 @@ public class StudyMaster2000 : MonoBehaviour {
                 newCube.GetComponent<MeshRenderer>().enabled = false;
                 newCube.transform.localPosition = new Vector3(0, 0, combinations[_currentRun].objectDepth); // because Instantiate location is global
                 resize(newCube, combinations[_currentRun].objectDepth);
-                newCube.GetComponent<Material>().renderQueue = 5000;
+                //newCube.GetComponent<Material>().renderQueue = 5000;
 
                 CircularMovement cm = newCube.GetComponent<CircularMovement>();
                 cm.startAngleDeg = i * (360 / numberOfObjects);

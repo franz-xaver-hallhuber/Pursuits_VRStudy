@@ -34,6 +34,7 @@ public class StudyMaster2001 : MonoBehaviour {
 
     private Correlator2 coco;
     private GameObject correlator;
+    private ATMScript atm;
     public int counterThreshold;
 
     // Use this for initialization
@@ -43,6 +44,8 @@ public class StudyMaster2001 : MonoBehaviour {
         result = new List<int>();
         digits = new List<int>();
         allResults = new List<string>();
+
+        atm = GameObject.Find("ATM").GetComponent<ATMScript>();
         
         // for the start just create a list with all combinations in random order
         for (int i=0; i< numberOfTrials; i++)
@@ -77,7 +80,7 @@ public class StudyMaster2001 : MonoBehaviour {
         if (_currentRun < numberOfTrials)
         {
             GameObject master = GameObject.Find("cubePrefab");
-            GameObject eyeCam = GameObject.Find("Camera (eye)");
+            GameObject eyeCam = GameObject.Find("CubeCamera (eye)");
 
             // create clockwise objects
             for (int i = 1; i > 0; i++)
@@ -176,6 +179,8 @@ public class StudyMaster2001 : MonoBehaviour {
                 }
                 yield return new WaitForSeconds(0.2f);
             }
+            atm.progress(_currentDigit);
+
             result.Add(coco.clearTrajectories());
             StartCoroutine(Flash());
             yield return new WaitForSeconds(0.5f);
@@ -183,6 +188,8 @@ public class StudyMaster2001 : MonoBehaviour {
 
         allResults.Add(resultAsString());
 
+        if (Convert.ToInt32(resultAsString()) == pins[_currentRun]) atm.ok();
+        else atm.error();
         
         coco.endTrial(); // also kills all "Trackable"-tagged GameObjects
         coco.StopAllCoroutines(); // they stop anyway when _shouldStop is set to true, but to be sure..
