@@ -68,7 +68,7 @@ public class Correlator2 : MonoBehaviour {
 
     // logfiles
     private StreamWriter correlationWriter, selectionwriter;
-    private String logFolder = "Logfiles";
+    public String logFolder = "Logfiles";
     
     // Timespan to measure the duration of calculating a correlation factor for all objects in sceneObjects
     TimeSpan calcDur = new TimeSpan();

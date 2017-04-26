@@ -7,8 +7,6 @@ using UnityEngine.SceneManagement;
 
 namespace Assets.Scripts
 {
-    
-
     public class MovingMeteor : ICloneable, IEquatable<MovingMeteor>
     {
         GameObject go;

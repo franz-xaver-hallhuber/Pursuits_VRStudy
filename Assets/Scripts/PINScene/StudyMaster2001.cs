@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 
@@ -36,6 +37,7 @@ public class StudyMaster2001 : MonoBehaviour {
     private GameObject correlator;
     private ATMScript atm;
     public int counterThreshold;
+    private StreamWriter resultWriter;
 
     // Use this for initialization
     void Start () {
@@ -44,6 +46,8 @@ public class StudyMaster2001 : MonoBehaviour {
         result = new List<int>();
         digits = new List<int>();
         allResults = new List<string>();
+
+        
 
         atm = GameObject.Find("ATM").GetComponent<ATMScript>();
         
@@ -113,6 +117,7 @@ public class StudyMaster2001 : MonoBehaviour {
         } else
         {
             currentState = state.studyOver;
+            resultWriter.Close();
         }
     }
 
@@ -149,6 +154,9 @@ public class StudyMaster2001 : MonoBehaviour {
         coco.counterThreshold = counterThreshold;
         coco.justCount = true;
         coco.Init(studyName);
+
+        resultWriter = new StreamWriter(coco.logFolder + @"\log_Results_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+        resultWriter.WriteLine("Timestamp;IntendedPIN;EnteredPIN;correct");
 
         StartCoroutine(FeedCoco());        
     }
@@ -187,8 +195,11 @@ public class StudyMaster2001 : MonoBehaviour {
         }
 
         allResults.Add(resultAsString());
+        bool _correct = Convert.ToInt32(resultAsString()) == pins[_currentRun];
 
-        if (Convert.ToInt32(resultAsString()) == pins[_currentRun]) atm.ok();
+        resultWriter.WriteLine(PupilGazeTracker.Instance._globalTime + ";" + pins[_currentRun] + ";" + resultAsString() + ";" + _correct);
+
+        if (_correct) atm.ok();
         else atm.error();
         
         coco.endTrial(); // also kills all "Trackable"-tagged GameObjects
@@ -252,5 +263,10 @@ public class StudyMaster2001 : MonoBehaviour {
             }
             yield return null;
         }        
+    }
+
+    private void OnDestroy()
+    {
+        resultWriter.Close();
     }
 }

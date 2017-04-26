@@ -12,7 +12,7 @@ public class CircularMovement : MonoBehaviour {
     }
     public RotationAxis rotationAxis;
 
-    private double nextRad;
+    public double nextRad;
     private Vector3 localCenter;
     private Quaternion startRotation;
     public bool waitForInit = true;

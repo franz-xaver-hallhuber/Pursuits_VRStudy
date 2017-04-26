@@ -84,10 +84,10 @@ public class StudyMasterMeteor : MonoBehaviour {
 
                 //how big should the new meteors be?
                 float _scale = UnityEngine.Random.Range(0.5f, 1.5f);
-
+                
                 // how many meteors should there be in the new trajectory?
                 int _atOnce = UnityEngine.Random.Range(1, maxNumberOfMeteors - GameObject.FindGameObjectsWithTag("Trackable").Length);
-
+                
                 for (int i = 0; i<_atOnce ; i++)
                 {
                     GameObject _newMeteor = GameObject.Instantiate(meteorPrefab, new Vector3(0, 0, 0), UnityEngine.Random.rotation, eyeCam.transform);
@@ -104,6 +104,12 @@ public class StudyMasterMeteor : MonoBehaviour {
                     _newMove.rotationAxis = CircularMovement.RotationAxis.zAxis;
                     _newMove.Init();
                     _newMove.shouldStart = true;
+
+                    while (_newMeteor.GetComponentInChildren<MeteorCollider>().isOverlapping)
+                    {
+                        _newMove.nextRad++;
+                        yield return null;
+                    }
 
                     coco.register(_newMeteor, Convert.ToInt32(_newMeteor.name));
                 }

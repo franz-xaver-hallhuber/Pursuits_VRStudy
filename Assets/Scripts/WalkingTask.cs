@@ -36,7 +36,7 @@ public class WalkingTask : MonoBehaviour {
 	public IEnumerator RunWalkingTask () {
         plane.GetComponent<MeshRenderer>().enabled = true;
 
-        while (GetComponent<StudyMasterMeteor>().currentState != StudyMasterMeteor.state.gameOver)
+        while (true)
         {
             if (reachedDestination())
             {
