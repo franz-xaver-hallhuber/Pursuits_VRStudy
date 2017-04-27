@@ -433,7 +433,7 @@ MonoBehaviour:
   eyeCam: {fileID: 1892002286}
   screen: {fileID: 1816347305}
   money: {fileID: 341228428}
-  tolerance: 1.3
+  tolerance: 1.4
 --- !u!1 &298315435
 GameObject:
   m_ObjectHideFlags: 0

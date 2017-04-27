@@ -359,7 +359,6 @@ GameObject:
   - component: {fileID: 566549756}
   - component: {fileID: 566549757}
   - component: {fileID: 566549755}
-  - component: {fileID: 566549758}
   m_Layer: 0
   m_Name: StudyCoordinator
   m_TagString: Untagged
@@ -398,20 +397,6 @@ Transform:
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &566549757
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 566549754}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fec5180cdc94cf64c88d0c2ea946a536, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  plane: {fileID: 2104938325}
-  ViveCamera: {fileID: 697855678}
-  walkingTolerance: 0.5
---- !u!114 &566549758
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
