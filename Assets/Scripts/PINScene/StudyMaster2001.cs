@@ -46,9 +46,7 @@ public class StudyMaster2001 : MonoBehaviour {
         result = new List<int>();
         digits = new List<int>();
         allResults = new List<string>();
-
         
-
         atm = GameObject.Find("ATM").GetComponent<ATMScript>();
         
         // for the start just create a list with all combinations in random order
@@ -156,7 +154,7 @@ public class StudyMaster2001 : MonoBehaviour {
         coco.Init(studyName);
 
         resultWriter = new StreamWriter(coco.logFolder + @"\log_Results_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-        resultWriter.WriteLine("Timestamp;IntendedPIN;EnteredPIN;correct");
+        resultWriter.WriteLine("Timestamp;SelectionTime;IntendedPIN;EnteredPIN;correct");
 
         StartCoroutine(FeedCoco());        
     }
@@ -171,15 +169,17 @@ public class StudyMaster2001 : MonoBehaviour {
     {
         result.Clear();
 
+        TimeSpan trialStart = PupilGazeTracker.Instance._globalTime;
+
         for (_currentDigit = 0; _currentDigit < pinLength; _currentDigit++)
         {
-            float start = Time.realtimeSinceStartup;
+            TimeSpan start = PupilGazeTracker.Instance._globalTime;
             //Debug.Log("Started Correlator for digit " + _currentDigit);
             coco.setAimAndStartCoroutine(digits[_currentDigit]);
             
             while (!coco._shouldStop) // _shouldStop turns true if object was selected
             {
-                if (Time.realtimeSinceStartup - start > timeoutSec)
+                if ((PupilGazeTracker.Instance._globalTime - start).TotalSeconds > timeoutSec)
                 {
                     //Debug.Log("Reached time limit");
                     coco._shouldStop = true;
@@ -197,7 +197,7 @@ public class StudyMaster2001 : MonoBehaviour {
         allResults.Add(resultAsString());
         bool _correct = Convert.ToInt32(resultAsString()) == pins[_currentRun];
 
-        resultWriter.WriteLine(PupilGazeTracker.Instance._globalTime + ";" + pins[_currentRun] + ";" + resultAsString() + ";" + _correct);
+        resultWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + (PupilGazeTracker.Instance._globalTime - trialStart).TotalSeconds + ";" + pins[_currentRun] + ";" + resultAsString() + ";" + _correct);
 
         if (_correct) atm.ok();
         else atm.error();

@@ -76,16 +76,7 @@ public class StudyMaster2000 : MonoBehaviour {
 
         currentState = state.waitingForUserInput;
 
-        // disable play area visualisazion if there's no walking task
-        if (walkingTask)
-        {
-            GetComponent<WalkingTask>().Init();
-            StartCoroutine(GetComponent<WalkingTask>().RunWalkingTask());
-            GameObject.Find("[CameraRig]").GetComponent<MeshRenderer>().enabled = true;
-        } else
-        {
-            GameObject.Find("[CameraRig]").GetComponent<MeshRenderer>().enabled = false;
-        }
+        
     }
 
 
@@ -175,10 +166,22 @@ public class StudyMaster2000 : MonoBehaviour {
         coco.selectAimAuto = true;
         coco.enableHalo = false;
         coco.startRightAway = true;
-        conditionWriter = new StreamWriter(coco.Init(studyName) + @"\log_Conditions_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv"); ;
+        string logFolder = coco.Init(studyName);
+        conditionWriter = new StreamWriter(logFolder + @"\log_Conditions_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv"); ;
         conditionWriter.WriteLine("timestamp;radius;size;depth");
-        StartCoroutine(conductStudy());      
-          
+        StartCoroutine(conductStudy());
+
+        // start walking task
+        if (walkingTask)
+        {
+            GetComponent<WalkingTask>().Init(logFolder);
+            StartCoroutine(GetComponent<WalkingTask>().RunWalkingTask());
+            GameObject.Find("[CameraRig]").GetComponent<MeshRenderer>().enabled = true;
+        }
+        else // disable play area visualisazion if there's no walking task
+        {
+            GameObject.Find("[CameraRig]").GetComponent<MeshRenderer>().enabled = false;
+        }
     }
 
     /// <summary>
@@ -218,6 +221,8 @@ public class StudyMaster2000 : MonoBehaviour {
         }
         currentState = state.studyOver;
 
+        coco._shouldStop = true;
+        GetComponent<WalkingTask>()._shouldStop = true;
         coco.StopAllCoroutines();
         Destroy(coco);
         Destroy(correlator);
@@ -229,10 +234,7 @@ public class StudyMaster2000 : MonoBehaviour {
         _abort = true;
         coco._shouldStop = true;
     }
-
     
-    
-
     IEnumerator waitforStart()
     {
         while (currentState == state.readyToStart)

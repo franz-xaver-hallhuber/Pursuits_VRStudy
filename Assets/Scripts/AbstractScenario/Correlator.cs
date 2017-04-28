@@ -7,6 +7,7 @@ using System.IO;
 using Correlation;
 using Assets.Scripts;
 using UnityEngine.SceneManagement;
+using System.Text;
 
 public class Correlator : MonoBehaviour {
     
@@ -33,7 +34,7 @@ public class Correlator : MonoBehaviour {
     public volatile bool _shouldStop;
 
     // logfiles
-    private StreamWriter correlationWriter, selectionwriter;
+    private StreamWriter correlationWriter, selectionWriter;
     private String logFolder = "Logfiles", selection = "";
 
     // TODO: während die objekte für die korrelation geklont werden, keine punkte hinzufügen, um inkonsistenzen zu vermeiden
@@ -65,7 +66,7 @@ public class Correlator : MonoBehaviour {
             
             gazeTrajectory = new MovingObject(null, 0, trialNo, logFolder);
             correlationWriter = new StreamWriter(logFolder + @"\log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-            selectionwriter = new StreamWriter(logFolder + @"\log_Selection_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+            selectionWriter = new StreamWriter(logFolder + @"\log_Selection_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
             // trajectoryWriter = new StreamWriter("log_Trajectories_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
 
             // logfile for correlator: name of GameObject; timestamp; corr.value x; corr.value y; w; correlation frequency;
@@ -73,7 +74,7 @@ public class Correlator : MonoBehaviour {
             correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye;");
 
             // comparison of what is selected vs what the participant is told to look at
-            selectionwriter.WriteLine("Timestamp;Name;smoothCorrel;speed;task;selected;correlationToIntendedObject");
+            selectionWriter.WriteLine("Timestamp;Name;smoothCorrel;speed;task;selected;correlationToIntendedObject");
 
             // search for objects tagged 'Trackable', give them an ID and add them to the list
             int _newid = 1;
@@ -105,8 +106,8 @@ public class Correlator : MonoBehaviour {
         Directory.CreateDirectory(logFolder);
         
         gazeTrajectory = new MovingObject(null, 0, trialNo, logFolder);
-        //correlationWriter = new StreamWriter(logFolder + @"\log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-        selectionwriter = new StreamWriter(logFolder + @"\log_Selection_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+        //correlationWriter = new StreamWriter(logFolder + @"\log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv",true);
+        selectionWriter = new StreamWriter(logFolder + @"\log_Selection_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv", true);
         // trajectoryWriter = new StreamWriter("log_Trajectories_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
 
         // logfile for correlator: name of GameObject; timestamp; corr.value x; corr.value y; w; correlation frequency;
@@ -114,7 +115,7 @@ public class Correlator : MonoBehaviour {
         //correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye;");
 
         // comparison of what is selected vs what the participant is told to look at
-        selectionwriter.WriteLine("Duration;Name;smoothCorrel;speed;task;selected;correlationToIntendedObject");
+        selectionWriter.WriteLine("Timestamp;SelectionTime;Name;smoothCorrel;intendedObject;correlationToIntendedObject;correct?;threshold;w;corrWindow;corrFrequency");
 
         // search for objects tagged 'Trackable', give them an ID and add them to the list
         // do that in studymaster
@@ -383,11 +384,12 @@ public class Correlator : MonoBehaviour {
 
                     TimeSpan totalTime = PupilGazeTracker.Instance._globalTime - startOfTrial;
 
-                    selectionwriter.WriteLine(totalTime.TotalSeconds + ";"
+                    selectionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" +
+                        + totalTime.TotalSeconds + ";"
                         + selection + ";"
                         + results[i] + ";"
-                        + ((lookAt != 0) ? (resemblance(_tempObjects[i], intention).ToString()) : "") + ";"
                         + lookAt + ";"
+                        + (resemblance(_tempObjects[i], intention).ToString()) + ";"
                         + (selection == lookAt.ToString()) + ";"
                         + threshold + ";" + w + ";" + corrWindow + ";" + corrFrequency + ";"
                         );
@@ -424,8 +426,8 @@ public class Correlator : MonoBehaviour {
         foreach (MovingObject mo in sceneObjects) mo.killMe();
         gazeTrajectory.killMe();
 
-        correlationWriter.Close();
-        selectionwriter.Close();
+        //correlationWriter.Close();
+        selectionWriter.Close();
         gazeTrajectory.killMe();
         return selection;
     }

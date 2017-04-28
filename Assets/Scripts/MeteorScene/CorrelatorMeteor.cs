@@ -96,7 +96,7 @@ public class CorrelatorMeteor : MonoBehaviour {
     /// Initialize the Correlator programatically
     /// </summary>
     /// <param name="foldername">Name of the folder in which logfiles are stored. Folder structure will be <paramref name="foldername"/>\Participant{trialNo}\{SceneName}\lox_{xxx}</param>
-    public void Init(string foldername)
+    public string Init(string foldername)
     {
         sceneObjects = new List<MovingMeteor>();
         logFolder = foldername + @"\Participant" + participantID + @"\" + SceneManager.GetActiveScene().name;
@@ -112,8 +112,8 @@ public class CorrelatorMeteor : MonoBehaviour {
 
         // comparison of what is selected vs what the participant is told to look at
         selectionwriter.WriteLine("Timestamp;Name;smoothCorrel;speed;task;selected;correlationToIntendedObject");
-        
-        
+
+        return logFolder;
     }
     
 

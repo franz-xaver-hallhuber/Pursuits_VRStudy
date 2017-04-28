@@ -140,10 +140,11 @@ public class StudyMasterMeteor : MonoBehaviour {
         coco.Gaze = PupilGazeTracker.GazeSource.BothEyes;
         coco.justCount = true;
         coco.counterThreshold = 20;
-        coco.Init(studyName);
+        string logFolder = coco.Init(studyName);
 
         StartCoroutine(createMeteors());
-        GetComponent<WalkingTask>().Init();
+        
+        GetComponent<WalkingTask>().Init(logFolder);
         StartCoroutine(GetComponent<WalkingTask>().RunWalkingTask());
 
         coco.setAimAndStartCoroutine();

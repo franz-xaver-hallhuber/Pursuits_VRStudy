@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using Valve.VR;
 
@@ -12,8 +13,16 @@ public class WalkingTask : MonoBehaviour {
 
     private Vector2 min, max;
     private Quarters q;
-    
-    public void Init()
+    private StreamWriter walkingWriter;
+
+    public bool _shouldStop { get; set; }
+
+    private void OnDestroy()
+    {
+        walkingWriter.Close();
+    }
+
+    public void Init(string logFolder)
     {
 
         HmdQuad_t rect = new HmdQuad_t();
@@ -30,18 +39,29 @@ public class WalkingTask : MonoBehaviour {
         min = new Vector2(x[0], z[0]);
 
         q = new Quarters(max, min);
+
+        walkingWriter = new StreamWriter(logFolder + @"\log_Walking_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv", true);
+        walkingWriter.WriteLine("Timestamp;taskTime;taskDistance;taskVelocity");
     }
 	
 	// Update is called once per frame
 	public IEnumerator RunWalkingTask () {
         plane.GetComponent<MeshRenderer>().enabled = true;
+        TimeSpan _startTask = PupilGazeTracker.Instance._globalTime;
+        Vector2 _currentDest = Vector2.one;
+        Vector2 _lastDest = new Vector2(plane.transform.position.x, plane.transform.position.z);
 
-        while (true)
+        while (!_shouldStop)
         {
             if (reachedDestination())
             {
-                Vector2 newXZ = q.getNextPosition(new Vector2(plane.transform.position.x, plane.transform.position.z));
-                plane.transform.position = new Vector3(newXZ.x, 0, newXZ.y);
+                walkingWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";"
+                    + (PupilGazeTracker.Instance._globalTime - _startTask).TotalSeconds + ";"
+                    + Vector2.Distance(_currentDest, _lastDest));
+                _currentDest = q.getNextPosition(new Vector2(plane.transform.position.x, plane.transform.position.z));
+                _lastDest = new Vector2(plane.transform.position.x, plane.transform.position.z);
+                plane.transform.position = new Vector3(_currentDest.x, 0, _currentDest.y);
+                _startTask = PupilGazeTracker.Instance._globalTime;
             }
             yield return null;
         }
@@ -80,21 +100,14 @@ public class Quarters
 
         _res = last + UnityEngine.Random.Range(maxDistance / 2, maxDistance) * UnityEngine.Random.insideUnitCircle;
 
-        //_res.x = (_res.x < start.x ? _res.x + end.x - start.x : (_res.x > end.x ? _res.x - end.x + start.x : _res.x));
-        //int xFactor = (_res.x < start.x ? 1 : (_res.x > end.x ? -1 : 0));
-        //int yFactor = (_res.y < start.y ? 1 : (_res.y > end.y ? -1 : 0));
-        //_res.x = _res.x + xFactor * (end.x - start.x);
-        //_res.y = _res.x + yFactor * (end.y - start.y);
-
-        //if (last.x < middle.x) _res.x = UnityEngine.Random.Range(middle.x, end.x);
-        //else _res.x = UnityEngine.Random.Range(start.x, middle.x);
-        //if (last.y < middle.y) _res.y = UnityEngine.Random.Range(middle.y, end.y);
-        //else _res.y = UnityEngine.Random.Range(start.y, middle.y);
+        
 
         if (_res.x < start.x || _res.x > end.x) _res.x = start.x + (Mathf.Abs(_res.x - start.x) % (end.x - start.x));
         if (_res.y < start.y || _res.y > end.y) _res.y = start.y + (Mathf.Abs(_res.y - start.y) % (end.y - start.y));
 
         return _res;
     }
+
+    
     
 }
