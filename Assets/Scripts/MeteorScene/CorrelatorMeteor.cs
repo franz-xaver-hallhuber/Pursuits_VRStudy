@@ -160,7 +160,6 @@ public class CorrelatorMeteor : MonoBehaviour {
     public void register(GameObject go, int id)
     {
         sceneObjects.Add(new MovingMeteor(go,id,participantID, logFolder));
-        selectAim();
     }
 
     /// <summary>
@@ -186,7 +185,7 @@ public class CorrelatorMeteor : MonoBehaviour {
     }
 
     /// <summary>
-    /// 
+    /// Clears all object and gaze trajectories
     /// </summary>
     /// <param name="next"></param>
     /// <returns></returns>
@@ -334,9 +333,7 @@ public class CorrelatorMeteor : MonoBehaviour {
                     // in cases where an object only moves along one axis, replace NaN with 0
                     if (double.IsNaN(coeffX)) { coeffX = 0; }
                     if (double.IsNaN(coeffY)) { coeffY = 0; }
-
-                    if (_shouldStop) break;
-
+                    
                     // add result to the original list
                     //Debug.Log("adding to results list: " + mo.name + "," + calcStart + "," + coeffX + "," + coeffY);
                     results.Add((float)sceneObjects.Find(x => x.Equals(mo)).addSample(calcStart, (coeffX + coeffY) / 2, corrWindow));
@@ -349,7 +346,7 @@ public class CorrelatorMeteor : MonoBehaviour {
                 }
             }
 
-            if (_shouldStop) break;
+           
 
             //Debug.Log("lookAt " + lookAt);
             //MovingMeteor intention = (MovingMeteor)sceneObjects.Find(x => x.Equals(lookAt + "")).Clone();

@@ -112,6 +112,7 @@ public class StudyMasterMeteor : MonoBehaviour {
                     }
 
                     coco.register(_newMeteor, Convert.ToInt32(_newMeteor.name));
+                    coco.selectAim();
                 }
                 yield return new WaitForSeconds(refreshRateSec);
             }

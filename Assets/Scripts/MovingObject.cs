@@ -82,7 +82,9 @@ namespace Assets.Scripts
                 {
                     Material mat = go.GetComponent<Renderer>().material;
                     mat.mainTexture = CreateNumberTexture.getNumberTexture(id,true);
+                    mat.color = Color.blue;
                     name = id+"";
+                    go.name = name;
                     }
 
                 // determine type of trajectory

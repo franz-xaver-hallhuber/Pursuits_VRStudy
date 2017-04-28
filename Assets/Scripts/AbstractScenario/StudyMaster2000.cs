@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 public class Trial
@@ -44,11 +45,14 @@ public class StudyMaster2000 : MonoBehaviour {
     private bool _abort;
     private string _lastEntry;
 
+    private StreamWriter conditionWriter;
+
     // Use this for initialization
     void Start () {
         currentState = state.creatingCases;
 
         combinations = new List<Trial>();
+        
 
         // for the start just create a list with all combinations in random order
         foreach (float f in radii)
@@ -94,7 +98,7 @@ public class StudyMaster2000 : MonoBehaviour {
             participant = GUI.TextField(new Rect(Screen.width / 2 - 50, Screen.height / 2 - 25, 100, 50), participant, 2);
             if (GUI.Button(new Rect(Screen.width / 2 - 30, Screen.height / 2 + 40, 60, 20), "Submit"))
             {
-                if (Convert.ToInt32(participant) != 0) createObjects();
+                startStudy();
             }
         }
         
@@ -120,6 +124,13 @@ public class StudyMaster2000 : MonoBehaviour {
         {
             GameObject master = GameObject.Find("cubePrefab");
             GameObject eyeCam = GameObject.Find("Camera (eye)");
+
+            conditionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";"
+                + combinations[_currentRun].trajectoryRadius + ";"
+                + combinations[_currentRun].objectSize + ";"
+                + combinations[_currentRun].objectDepth
+                );
+
             for (int i = 0; i < numberOfObjects; i++)
             {
                 GameObject newCube = GameObject.Instantiate(master, new Vector3(0,0,0), master.transform.localRotation, eyeCam.transform);
@@ -129,7 +140,6 @@ public class StudyMaster2000 : MonoBehaviour {
                 newCube.GetComponent<MeshRenderer>().enabled = false;
                 newCube.transform.localPosition = new Vector3(0, 0, combinations[_currentRun].objectDepth); // because Instantiate location is global
                 resize(newCube, combinations[_currentRun].objectDepth);
-                //newCube.GetComponent<Material>().renderQueue = 5000;
 
                 CircularMovement cm = newCube.GetComponent<CircularMovement>();
                 cm.startAngleDeg = i * (360 / numberOfObjects);
@@ -137,16 +147,7 @@ public class StudyMaster2000 : MonoBehaviour {
                 cm.shouldStart = false;
                 cm.waitForInit = false;
             }
-
-            if (!automatic)
-            {
-                currentState = state.readyToStart;
-                StartCoroutine(waitforStart());
-            } else
-            {
-                currentState = state.studyRunning;
-                startTrial();
-            }            
+                    
         } else
         {
             currentState = state.studyOver;
@@ -154,10 +155,10 @@ public class StudyMaster2000 : MonoBehaviour {
         
     }
 
-    private void startTrial()
+    private void startStudy()
     {
         correlator = new GameObject("Correlator");
-         coco = correlator.AddComponent<Correlator>();
+        coco = correlator.AddComponent<Correlator>();
 
         _abort = false;
 
@@ -169,33 +170,58 @@ public class StudyMaster2000 : MonoBehaviour {
         coco.Coefficient = Correlator.CorrelationMethod.Pearson;
         coco.transparent = true;
         coco.waitForInit = true;
-        coco._shouldStop = false;
+        coco._shouldStop = true;
         coco.trialNo = Convert.ToInt32(participant);
         coco.selectAimAuto = true;
         coco.enableHalo = false;
         coco.startRightAway = true;
-        coco.Init(studyName);
-
-        StartCoroutine(waitForCocoToFinish());        
+        conditionWriter = new StreamWriter(coco.Init(studyName) + @"\log_Conditions_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv"); ;
+        conditionWriter.WriteLine("timestamp;radius;size;depth");
+        StartCoroutine(conductStudy());      
+          
     }
 
     /// <summary>
     /// If Correlator._shouldStop is true at some point, StudyMaster2000 will shut it down and load the next setting
     /// </summary>
     /// <returns></returns>
-    IEnumerator waitForCocoToFinish()
+    IEnumerator conductStudy()
     {
-        while (!coco._shouldStop) yield return null;
+        while (_currentRun < combinations.Count)
+        {
+            // prepare the scene
+            createObjects();
+            _abort = false; // reset abort flag
+            
+            // registers objects and selects aim
+            coco.registerNewObjectsAndSetAim();
 
-        _lastEntry = coco.endTrial();
+            currentState = state.readyToStart;
+            StartCoroutine(waitforStart());
+
+            // wait until user hits space
+            while (currentState == state.readyToStart) yield return null;
+
+            // start correlator
+            coco._shouldStop = false;
+            coco.startCoroutine(); //also enables object movement and visibility
+
+            // wait until an object is selected
+            while (!coco._shouldStop) yield return null; 
+
+            _lastEntry = coco.clearGazeAndRemoveObjects(); //reset the Correlator
+
+            // wait until all objects are killed
+            while (GameObject.FindGameObjectsWithTag("Trackable").Length != 0) yield return null;
+
+            if (!_abort) _currentRun++; // increment
+        }
+        currentState = state.studyOver;
+
         coco.StopAllCoroutines();
         Destroy(coco);
         Destroy(correlator);
-
-        if (!_abort) _currentRun++;
-        currentState = state.creatingObjects;
-        createObjects();
-
+        
     }
 
     internal void abortTrial()
@@ -205,6 +231,8 @@ public class StudyMaster2000 : MonoBehaviour {
     }
 
     
+    
+
     IEnumerator waitforStart()
     {
         while (currentState == state.readyToStart)
@@ -212,9 +240,13 @@ public class StudyMaster2000 : MonoBehaviour {
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 currentState = state.studyRunning;
-                startTrial();
             }
             yield return null;
         }        
+    }
+
+    private void OnDestroy()
+    {
+        conditionWriter.Close();
     }
 }
