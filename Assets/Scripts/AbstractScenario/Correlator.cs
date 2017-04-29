@@ -96,7 +96,7 @@ public class Correlator : MonoBehaviour {
     public void selectAim()
     {
         lookAt = UnityEngine.Random.Range(1, sceneObjects.Count);
-        sceneObjects[lookAt - 1].setAim(); //color the aim red
+        sceneObjects[lookAt - 1].setAimAuto(); //color the aim red
     }
 
     public string Init(string foldername)
@@ -396,9 +396,7 @@ public class Correlator : MonoBehaviour {
                 }
                 else
                     if (enableHalo) _tempObjects[i].activate(false);
-                
-
-                
+               
             }
 
             _pearsonIsRunning = false;

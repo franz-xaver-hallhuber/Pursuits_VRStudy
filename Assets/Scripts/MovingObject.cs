@@ -130,7 +130,7 @@ namespace Assets.Scripts
             }
         }
         
-        public void setAim()
+        public void setAimAuto()
         {
             go.GetComponent<Renderer>().material.color = Color.red;
         }
@@ -314,7 +314,7 @@ namespace Assets.Scripts
 
         public object Clone()
         {
-            while (updateinprogess) { } // bad bad style
+            while (updateinprogess) { GameObject.Find("Lag").GetComponent<LagScript>().blink(); }
             copyinprogress = true; // prevents trajectory list from being altered while creating copies
             MovingObject newMo = (MovingObject)this.MemberwiseClone();
             
@@ -322,11 +322,16 @@ namespace Assets.Scripts
             foreach (TimePoint tp in newMo.trajectory)
             {
                 
-                if (tp != null) positionWriter.WriteLine(tp.timestamp.TotalSeconds + ";" + tp.pos.x + ";" + tp.pos.y + ";;");
+                // if (tp != null) positionWriter.WriteLine(tp.timestamp.TotalSeconds + ";" + tp.pos.x + ";" + tp.pos.y + ";;");
                 
             }
             copyinprogress = false;
             return newMo;
+        }
+
+        public void visible(bool visible)
+        {
+            go.GetComponent<MeshRenderer>().enabled = visible;
         }
 
         public bool Equals(MovingObject other)
@@ -338,6 +343,5 @@ namespace Assets.Scripts
         {
             return name == other;
         }
-        
     }
 }

@@ -79,8 +79,7 @@ public class StudyMaster2001 : MonoBehaviour {
 
     private void createObjects()
     {
-        if (_currentRun < numberOfTrials)
-        {
+        
             GameObject master = GameObject.Find("cubePrefab");
             GameObject eyeCam = GameObject.Find("CubeCamera (eye)");
 
@@ -108,28 +107,6 @@ public class StudyMaster2001 : MonoBehaviour {
 
                 if (i == 0) break;
             }
-            
-                currentState = state.readyToStart;
-                StartCoroutine(waitforStart());
-           
-        } else
-        {
-            currentState = state.studyOver;
-            resultWriter.Close();
-        }
-    }
-
-    private void startTrial()
-    {
-        // split up PIN
-        int _temp = pins[_currentRun];
-        digits = new List<int>();
-        while (_temp > 0)
-        {
-            digits.Add(_temp % 10);
-            _temp /= 10;
-        }
-        digits.Reverse();
 
         // create and configure correlator
         correlator = new GameObject("Correlator2");
@@ -143,7 +120,7 @@ public class StudyMaster2001 : MonoBehaviour {
         coco.Coefficient = Correlator2.CorrelationMethod.Pearson;
         coco.transparent = true;
         coco.waitForInit = true;
-        coco._shouldStop = false;
+        coco._shouldStop = true;
         coco.participantID = Convert.ToInt32(participant);
         coco.selectAimAuto = false;
         coco.enableHalo = false;
@@ -156,8 +133,10 @@ public class StudyMaster2001 : MonoBehaviour {
         resultWriter = new StreamWriter(coco.logFolder + @"\log_Results_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         resultWriter.WriteLine("Timestamp;SelectionTime;IntendedPIN;EnteredPIN;correct");
 
-        StartCoroutine(FeedCoco());        
+        currentState = state.readyToStart;
+        StartCoroutine(FeedCoco());
     }
+
 
     /// <summary>
     /// Feeds the Correlator one digit at a time. Calls Correlator2.clearTrajectories either
@@ -167,52 +146,86 @@ public class StudyMaster2001 : MonoBehaviour {
     /// <returns></returns>
     IEnumerator FeedCoco()
     {
-        result.Clear();
-
-        TimeSpan trialStart = PupilGazeTracker.Instance._globalTime;
-
-        for (_currentDigit = 0; _currentDigit < pinLength; _currentDigit++)
+        while (_currentRun < pins.Count)
         {
-            TimeSpan start = PupilGazeTracker.Instance._globalTime;
-            //Debug.Log("Started Correlator for digit " + _currentDigit);
-            coco.setAimAndStartCoroutine(digits[_currentDigit]);
-            
-            while (!coco._shouldStop) // _shouldStop turns true if object was selected
+            // split up current PIN
+            int _temp = pins[_currentRun];
+            digits = new List<int>();
+            while (_temp > 0)
             {
-                if ((PupilGazeTracker.Instance._globalTime - start).TotalSeconds > timeoutSec)
-                {
-                    //Debug.Log("Reached time limit");
-                    coco._shouldStop = true;
-                    break;
-                }
-                yield return new WaitForSeconds(0.2f);
+                digits.Add(_temp % 10);
+                _temp /= 10;
             }
-            atm.progress(_currentDigit);
+            digits.Reverse();
+            
+            // wait for start
+            currentState = state.readyToStart;
+            StartCoroutine(waitforStart());
+            while (currentState == state.readyToStart) yield return null;
+            
+            TimeSpan trialStart = PupilGazeTracker.Instance._globalTime;
+            
+            //reset result list
+            result.Clear();
 
-            result.Add(coco.clearTrajectories());
-            StartCoroutine(Flash());
-            yield return new WaitForSeconds(0.5f);
+            // start pearson coroutine, make objects visible and move
+            coco.clearTrajectories();
+            coco.startCoroutine();
+
+            // loop through digits
+            for (_currentDigit = 0; _currentDigit < pinLength; _currentDigit++)
+            {
+                TimeSpan start = PupilGazeTracker.Instance._globalTime;
+                coco.lookAt = digits[_currentDigit];
+
+                coco.clearTrajectories(); // make sure trajectories and selection are empty before next digit
+
+                while (coco.selection == "") // _shouldStop turns true if object was selected
+                {
+                    if ((PupilGazeTracker.Instance._globalTime - start).TotalSeconds > timeoutSec)
+                    {
+                        //Debug.Log("Reached time limit");
+                        //coco._shouldStop = true;
+                        break;
+                    }
+                    yield return new WaitForSeconds(0.2f);
+                }
+                
+                //update atm screen
+                atm.progress(_currentDigit);
+
+                //get result from correlator and flash feedback
+                if (coco.selection == "") result.Add(-1);
+                else result.Add(Convert.ToInt32(coco.selection));
+
+                StartCoroutine(Flash()) ;
+                yield return new WaitForSeconds(0.5f);
+            }
+            coco.hideObjects();
+            coco._shouldStop = true; // let coroutines end
+
+            allResults.Add(resultAsString());
+            bool _correct = Convert.ToInt32(resultAsString()) == pins[_currentRun];
+
+            resultWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds 
+                + ";" + (PupilGazeTracker.Instance._globalTime - trialStart).TotalSeconds 
+                + ";" + pins[_currentRun] 
+                + ";" + resultAsString() 
+                + ";" + _correct
+                );
+
+            if (_correct) atm.ok();
+            else atm.error();
+
+            _currentRun++;
+            yield return null;
         }
-
-        allResults.Add(resultAsString());
-        bool _correct = Convert.ToInt32(resultAsString()) == pins[_currentRun];
-
-        resultWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" + (PupilGazeTracker.Instance._globalTime - trialStart).TotalSeconds + ";" + pins[_currentRun] + ";" + resultAsString() + ";" + _correct);
-
-        if (_correct) atm.ok();
-        else atm.error();
         
-        coco.endTrial(); // also kills all "Trackable"-tagged GameObjects
+        // end of study
+        coco.endTrial(); // also kills all "Trackable"-tagged GameObjects and closes loggers
         coco.StopAllCoroutines(); // they stop anyway when _shouldStop is set to true, but to be sure..
         Destroy(coco);
         Destroy(correlator);
-
-        // reset variables
-        _currentRun++;
-        _currentDigit = 0;
-
-        currentState = state.creatingObjects;
-        createObjects();
     }
 
     private string resultAsString()
@@ -220,6 +233,7 @@ public class StudyMaster2001 : MonoBehaviour {
         string _ret = "";
         foreach (int i in result)
         {
+            if  (i < 0) { _ret = "-1"; break; }
             _ret += i;
         }
         return _ret;
@@ -259,7 +273,6 @@ public class StudyMaster2001 : MonoBehaviour {
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 currentState = state.studyRunning;
-                startTrial();
             }
             yield return null;
         }        
