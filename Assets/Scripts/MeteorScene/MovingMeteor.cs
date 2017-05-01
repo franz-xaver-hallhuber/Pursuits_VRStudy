@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,22 +12,28 @@ namespace Assets.Scripts
     {
         GameObject go;
         private StreamWriter positionWriter;
-        private Vector3 _current;
+        public Vector3 _current { get; set; }
         private List<TimeSample> movingCorr;
         private Queue<TimePoint> tpBuffer;
         private bool IAmTarget;
         public int counter = 0;
+        public TimeSpan creationTime;
+
+        public bool recalibrateOnce = false;
         
         static bool copyinprogress, updateinprogess;
         public GameObject myExplosion;
-        public bool aim { get
+        public bool aim
+        {
+            get
             {
                 return IAmTarget;
             }
             set
             {
                 setAim();
-            } }
+            }
+        }
 
         public string name { get; set; }
         public float speed
@@ -51,8 +58,10 @@ namespace Assets.Scripts
             this.go = go;
             trajectory = new List<TimePoint>();
             movingCorr = new List<TimeSample>();
-
+            
             myTrajectory = new trajectoryType();
+
+            go.GetComponentInChildren<Renderer>().material.color = Color.blue;
 
             if (go != null)
             {
@@ -60,7 +69,6 @@ namespace Assets.Scripts
                 if (id >= 0 && id <= 10)
                 {
                     Material mat = go.GetComponentInChildren<Renderer>().material;
-                    //mat.mainTexture = CreateNumberTexture.getNumberTexture(id,true);
                     mat.color = Color.blue;
                     name = id+"";
                     }
@@ -76,9 +84,31 @@ namespace Assets.Scripts
             
             positionWriter = new StreamWriter(path + @"\log_" + name + "_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
             positionWriter.WriteLine(getName() + "Timestamp;" + getName() + "XPos;" + getName() + "YPos;" + getName() + "newCorr;" + getName() + "smoothCorr");
-            //positionWriter.WriteLine("nowTS;nowX;lastTS;lastX;pupilTS;scale");
 
-            myExplosion = go.transform.GetChild(1).gameObject;
+            myExplosion = go.transform.GetChild(1).gameObject; // Explotion always on second position!!
+
+            creationTime = PupilGazeTracker.Instance._globalTime;
+        }
+
+        public float getRadius()
+        {
+            return go.GetComponent<CircularMovement>().radius;
+        }
+        
+        public Vector3 getCenter()
+        {
+            return go.GetComponent<CircularMovement>().localCenter;
+        }
+
+        public IEnumerator increaseDeg()
+        {
+            TimeSpan startCalib = PupilGazeTracker.Instance._globalTime;
+            while (go.GetComponentInChildren<MeteorCollider>().isOverlapping && (PupilGazeTracker.Instance._globalTime-startCalib).TotalSeconds < 0.2)
+            {
+                go.GetComponentInChildren<CircularMovement>().nextRad++;
+                yield return null;
+            }
+            recalibrateOnce = true;
         }
 
         public void startMoving()
@@ -176,10 +206,10 @@ namespace Assets.Scripts
             return PupilGazeTracker.Instance._globalTime.TotalSeconds;
         }
 
-        private void whatsMySize()
+        public Vector2 whatsMySize()
         {
             ObjectToPx opx = GameObject.Find("Camera (eye)").GetComponent<ObjectToPx>();
-            
+            return opx.getAbsolutePxSize(go);
         }
 
         /// <summary>

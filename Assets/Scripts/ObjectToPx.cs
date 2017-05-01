@@ -27,7 +27,7 @@ public class ObjectToPx : MonoBehaviour {
     /// <returns>absolute size in px of an object on the Vive sceen</returns>
     public Vector2 getAbsolutePxSize(GameObject go)
     {
-        Bounds goBounds = go.GetComponent<MeshFilter>().mesh.bounds;
+        Bounds goBounds = go.GetComponentInChildren<Renderer>().bounds;
         List<Vector3> minMaxValues = new List<Vector3>();
 
         minMaxValues.Add(new Vector3(goBounds.center.x - goBounds.extents.x, goBounds.center.y + goBounds.extents.y, goBounds.center.z - goBounds.extents.z));
@@ -39,7 +39,7 @@ public class ObjectToPx : MonoBehaviour {
         minMaxValues.Add(new Vector3(goBounds.center.x + goBounds.extents.x, goBounds.center.y - goBounds.extents.y, goBounds.center.z - goBounds.extents.z));
         minMaxValues.Add(new Vector3(goBounds.center.x + goBounds.extents.x, goBounds.center.y - goBounds.extents.y, goBounds.center.z + goBounds.extents.z));
 
-        float maxX = 0, maxY = 0, minX = 0, minY = 0;
+        float maxX = 0, maxY = 0, minX = Screen.width, minY = Screen.height;
 
         foreach (Vector3 x in minMaxValues)
         {
@@ -47,8 +47,8 @@ public class ObjectToPx : MonoBehaviour {
             Vector3 screenPoint = ViveCamera.WorldToScreenPoint(x);
             if (screenPoint.x < minX) minX = screenPoint.x;
             if (screenPoint.x > maxX) maxX = screenPoint.x;
-            if (screenPoint.y < minY) minX = screenPoint.y;
-            if (screenPoint.y > maxY) maxX = screenPoint.y;
+            if (screenPoint.y < minY) minY = screenPoint.y;
+            if (screenPoint.y > maxY) maxY = screenPoint.y;
         }
 
         return new Vector2(maxX-minX,maxY-minY);

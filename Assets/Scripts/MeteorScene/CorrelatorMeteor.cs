@@ -67,11 +67,12 @@ public class CorrelatorMeteor : MonoBehaviour {
     MovingObject gazeTrajectory;
 
     // logfiles
-    private StreamWriter correlationWriter, selectionwriter;
+    private StreamWriter correlationWriter, selectionWriter;
     private String logFolder = "Logfiles";
     
     // Timespan to measure the duration of calculating a correlation factor for all objects in sceneObjects
     TimeSpan calcDur = new TimeSpan();
+    TimeSpan _lastExplosion = new TimeSpan();
 
     Coroutine correlationCoroutine;
     
@@ -87,8 +88,9 @@ public class CorrelatorMeteor : MonoBehaviour {
         foreach (MovingMeteor mm in sceneObjects) sceneHasAim = sceneHasAim || mm.aim;
         if (!sceneHasAim)
         {
-            lookAt = UnityEngine.Random.Range(1, sceneObjects.Count);
-            sceneObjects[lookAt - 1].setAim(); //color the aim red
+            lookAt = UnityEngine.Random.Range(0, sceneObjects.Count-1);
+            sceneObjects[lookAt].setAim(); //color the aim red
+            lookAt = Convert.ToInt32(sceneObjects[lookAt].name);
         }
     }
 
@@ -99,19 +101,20 @@ public class CorrelatorMeteor : MonoBehaviour {
     public string Init(string foldername)
     {
         sceneObjects = new List<MovingMeteor>();
-        logFolder = foldername + @"\Participant" + participantID + @"\" + SceneManager.GetActiveScene().name;
+        logFolder = foldername + @"\Participant" + participantID;
         Directory.CreateDirectory(logFolder);     
         gazeTrajectory = new MovingObject(null, 0, participantID, logFolder);
 
         correlationWriter = new StreamWriter(logFolder + @"\log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-        selectionwriter = new StreamWriter(logFolder + @"\log_Selection_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+        selectionWriter = new StreamWriter(logFolder + @"\log_Selection_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
 
         // logfile for correlator: name of GameObject; timestamp; corr.value x; corr.value y; w; coefficient average window; correlation frequency;
         // selected correlation (Pearson/Spearman); source for gaze data (left/right/both);
         correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye;");
 
         // comparison of what is selected vs what the participant is told to look at
-        selectionwriter.WriteLine("Timestamp;Name;smoothCorrel;speed;task;selected;correlationToIntendedObject");
+        selectionWriter.WriteLine("timestamp;selectionTime;selectedObject;targetMeteor;correct?;correlationToIntendedObject;distanceToIntendedObject;radius;center;size;counterThreshold;"
+            + "correlationThreshold;correlationAverageWindow;correlationFrequency;w");
 
         return logFolder;
     }
@@ -125,9 +128,28 @@ public class CorrelatorMeteor : MonoBehaviour {
 
         // Set listener for new gaze points
         PupilGazeTracker.OnEyeGaze += new PupilGazeTracker.OnEyeGazeDeleg(UpdateTrajectories);
+
+        StartCoroutine(recalibration());
     }
 
-    
+    private IEnumerator recalibration()
+    {
+        while (!_shouldStop)
+        {
+            yield return new WaitForSeconds(0.2f);
+
+
+            foreach (MovingMeteor mm in sceneObjects)
+            {
+                if (!mm.recalibrateOnce)
+                {
+                    StartCoroutine(mm.increaseDeg());
+                }
+                while (!mm.recalibrateOnce) yield return null;
+            }
+        }
+    }
+
     private void startCorrelationCoroutine()
     {
         // start object movements depending on startRightAway
@@ -297,6 +319,8 @@ public class CorrelatorMeteor : MonoBehaviour {
 
     IEnumerator CalculatePearson()
     {
+        _lastExplosion = PupilGazeTracker.Instance._globalTime;
+
         while (!_shouldStop)
         {
             _pearsonIsRunning = true;
@@ -374,13 +398,31 @@ public class CorrelatorMeteor : MonoBehaviour {
                         {
                             MovingMeteor mm = sceneObjects[i];
                             mm.activate(true);
+                            
+                            selection = _tempObjects[i].name;
+
+                            selectionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds
+                                + ";" + (PupilGazeTracker.Instance._globalTime - _lastExplosion).TotalSeconds
+                                + ";" + selection
+                                + ";" + lookAt
+                                + ";" + mm.aim
+                                + ";" + resemblance(_tempObjects[i],_tempObjects.Find(x => x.Equals(lookAt+"")))
+                                + ";" + Vector2.Distance(_tempObjects[i]._current, _tempObjects.Find(x => x.Equals(lookAt + ""))._current)
+                                + ";" + mm.getRadius()
+                                + ";" + mm.getCenter()
+                                + ";" + mm.whatsMySize()
+                                + ";" + counterThreshold
+                                + ";" + threshold
+                                + ";" + corrWindow
+                                + ";" + corrFrequency
+                                + ";" + w
+                                );
+
                             clearTrajectories();
                             sceneObjects.Remove(mm);
-
                             yield return new WaitForSeconds(3);
+                            _lastExplosion = PupilGazeTracker.Instance._globalTime;
                             mm.killMe();
-
-                            selection = _tempObjects[i].name;
                         }
                     }
 
@@ -390,15 +432,7 @@ public class CorrelatorMeteor : MonoBehaviour {
                 }
                 else
                     if (enableHalo) _tempObjects[i].activate(false);
-
-
-                selectionwriter.WriteLine(calcStart.TotalSeconds + ";"
-                        + _tempObjects[i].name + ";"
-                        + results[i] + ";"
-                        + _tempObjects[i].speed + ";"
-                        + lookAt + ";"
-                        + selection); // + ";"
-                        //+ (resemblance(_tempObjects[i], intention).ToString()));
+                
             }
 
             _pearsonIsRunning = false;
@@ -434,7 +468,7 @@ public class CorrelatorMeteor : MonoBehaviour {
         gazeTrajectory.killMe();
 
         correlationWriter.Close();
-        selectionwriter.Close();
+        selectionWriter.Close();
         gazeTrajectory.killMe();
         return 0;
     }

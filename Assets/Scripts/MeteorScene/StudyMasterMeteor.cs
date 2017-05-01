@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 
@@ -8,7 +9,7 @@ public class StudyMasterMeteor : MonoBehaviour {
     
     public string studyName;
     public float timeout;
-    public int maxNumberOfMeteors;
+    public int maxNumberOfMeteors, counterThreshold;
     public GameObject meteorPrefab;
 
     private List<string> allResults;
@@ -33,6 +34,7 @@ public class StudyMasterMeteor : MonoBehaviour {
     public float refreshRateSec;
     public GameObject eyeCam;
     private int meteorCounter=0;
+    
 
     // Use this for initialization
     void Start () {
@@ -73,6 +75,8 @@ public class StudyMasterMeteor : MonoBehaviour {
         {
             while (GameObject.FindGameObjectsWithTag("Trackable").Length < maxNumberOfMeteors)
             {
+                meteorPrefab.SetActive(true);
+
                 // preferences of the new trajectory
                 bool counter = UnityEngine.Random.value >= 0.5f; // counterclockwise?
                 int degSec = UnityEngine.Random.Range(10, 90); // speed
@@ -86,7 +90,7 @@ public class StudyMasterMeteor : MonoBehaviour {
                 float _scale = UnityEngine.Random.Range(0.5f, 1.5f);
                 
                 // how many meteors should there be in the new trajectory?
-                int _atOnce = UnityEngine.Random.Range(1, maxNumberOfMeteors - GameObject.FindGameObjectsWithTag("Trackable").Length);
+                int _atOnce = UnityEngine.Random.Range(1, Math.Min(maxNumberOfMeteors - GameObject.FindGameObjectsWithTag("Trackable").Length,5));
                 
                 for (int i = 0; i<_atOnce ; i++)
                 {
@@ -104,17 +108,14 @@ public class StudyMasterMeteor : MonoBehaviour {
                     _newMove.rotationAxis = CircularMovement.RotationAxis.zAxis;
                     _newMove.Init();
                     _newMove.shouldStart = true;
-
-                    while (_newMeteor.GetComponentInChildren<MeteorCollider>().isOverlapping)
-                    {
-                        _newMove.nextRad++;
-                        yield return null;
-                    }
+                    _newMove.recalibrateOnce = false;
 
                     coco.register(_newMeteor, Convert.ToInt32(_newMeteor.name));
                     coco.selectAim();
                 }
                 yield return new WaitForSeconds(refreshRateSec);
+
+                meteorPrefab.SetActive(false);
             }
             yield return null;
         }
@@ -139,12 +140,13 @@ public class StudyMasterMeteor : MonoBehaviour {
         coco.startRightAway = true;
         coco.Gaze = PupilGazeTracker.GazeSource.BothEyes;
         coco.justCount = true;
-        coco.counterThreshold = 20;
+        coco.counterThreshold = counterThreshold;
         string logFolder = coco.Init(studyName);
 
         StartCoroutine(createMeteors());
         
         GetComponent<WalkingTask>().Init(logFolder);
+
         StartCoroutine(GetComponent<WalkingTask>().RunWalkingTask());
 
         coco.setAimAndStartCoroutine();

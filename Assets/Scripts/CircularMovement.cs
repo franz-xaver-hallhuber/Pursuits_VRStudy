@@ -13,9 +13,11 @@ public class CircularMovement : MonoBehaviour {
     public RotationAxis rotationAxis;
 
     public double nextRad;
-    private Vector3 localCenter;
+    public Vector3 localCenter;
     private Quaternion startRotation;
     public bool waitForInit = true;
+
+    public bool recalibrateOnce = true; // set this to false when instantiating object to have it recalibrated
 
     
     // Use this for initialization
@@ -66,6 +68,8 @@ public class CircularMovement : MonoBehaviour {
                     break;
             }
 
+            
+
             // calculate next step
             degPerSec += accelerationPerSec * Time.deltaTime;
             nextRad += Mathf.Deg2Rad * (counterClockwise ? 1 : -1) * degPerSec * Time.deltaTime;
@@ -76,5 +80,7 @@ public class CircularMovement : MonoBehaviour {
             else
                 transform.localRotation = startRotation;
         }
+
+        
     }
 }

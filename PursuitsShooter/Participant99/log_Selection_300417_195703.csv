@@ -1,0 +1,5 @@
+timestamp;selectionTime;selectedObject;targetMeteor;correct?;correlationToIntendedObject;radius;center;size;counterThreshold;correlationThreshold;correlationAverageWindow;correlationFrequency;w
+16.159644;5.2787456;0;0;True;1;1.737702;(2.1, 0.1, 5.1);(147.2, 263.0);20;0.6;900;0.08;300
+23.0687356;3.9069488;2;4;False;0.99828701060061;2.281684;(-0.1, 0.6, 5.1);(100.1, 444.5);20;0.6;900;0.08;300
+29.5257015;3.4550597;6;4;False;-0.000281617559907243;0.820904;(-0.6, 0.3, 6.8);(116.9, 168.0);20;0.6;900;0.08;300
+36.6206428;4.0938458;4;4;True;1;2.281684;(-0.1, 0.6, 5.1);(108.3, 410.9);20;0.6;900;0.08;300

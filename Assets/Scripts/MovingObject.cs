@@ -42,7 +42,7 @@ namespace Assets.Scripts
     {
         GameObject go;
         private StreamWriter positionWriter;
-        private Vector3 _current;
+        public Vector3 _current { get; set; }
         private List<TimeSample> movingCorr;
         private Queue<TimePoint> tpBuffer;
         public int counter = 0;
