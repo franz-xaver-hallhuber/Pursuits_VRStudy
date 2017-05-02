@@ -37,7 +37,7 @@ public class StudyMaster2001 : MonoBehaviour {
     private GameObject correlator;
     private ATMScript atm;
     public int counterThreshold;
-    private StreamWriter resultWriter;
+    private StreamWriter resultWriter, digitWriter;
 
     // Use this for initialization
     void Start () {
@@ -131,7 +131,10 @@ public class StudyMaster2001 : MonoBehaviour {
         coco.Init(studyName);
 
         resultWriter = new StreamWriter(coco.logFolder + @"\log_Results_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-        resultWriter.WriteLine("Timestamp;SelectionTime;IntendedPIN;EnteredPIN;correct");
+        resultWriter.WriteLine("Timestamp;SelectionTime;IntendedPIN;EnteredPIN;correct;counterThreshold");
+
+        digitWriter = new StreamWriter(coco.logFolder + @"\log_Digits_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+        digitWriter.WriteLine("Timestamp;SelectionTime;IntendedDigit;EnteredDigit;correct;counterThreshold");
 
         currentState = state.readyToStart;
         StartCoroutine(FeedCoco());
@@ -175,14 +178,14 @@ public class StudyMaster2001 : MonoBehaviour {
             // loop through digits
             for (_currentDigit = 0; _currentDigit < pinLength; _currentDigit++)
             {
-                TimeSpan start = PupilGazeTracker.Instance._globalTime;
+                TimeSpan digitStart = PupilGazeTracker.Instance._globalTime;
                 coco.lookAt = digits[_currentDigit];
 
                 coco.clearTrajectories(); // make sure trajectories and selection are empty before next digit
 
                 while (coco.selection == "") // _shouldStop turns true if object was selected
                 {
-                    if ((PupilGazeTracker.Instance._globalTime - start).TotalSeconds > timeoutSec)
+                    if ((PupilGazeTracker.Instance._globalTime - digitStart).TotalSeconds > timeoutSec)
                     {
                         //Debug.Log("Reached time limit");
                         //coco._shouldStop = true;
@@ -193,12 +196,23 @@ public class StudyMaster2001 : MonoBehaviour {
                 
                 //update atm screen
                 atm.progress(_currentDigit);
+                StartCoroutine(Flash());
 
                 //get result from correlator and flash feedback
                 if (coco.selection == "") result.Add(-1);
-                else result.Add(Convert.ToInt32(coco.selection));
+                else
+                    result.Add(Convert.ToInt32(coco.selection));
 
-                StartCoroutine(Flash()) ;
+
+                digitWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds
+                    + ";" + (PupilGazeTracker.Instance._globalTime - digitStart).TotalSeconds
+                    + ";" + digits[_currentDigit].ToString()
+                    + ";" + coco.selection
+                    + ";" + (Convert.ToInt32( coco.selection) == digits[_currentDigit])
+                    + ";" + counterThreshold
+                );
+
+                
                 yield return new WaitForSeconds(0.5f);
             }
             coco.hideObjects();
@@ -212,6 +226,7 @@ public class StudyMaster2001 : MonoBehaviour {
                 + ";" + pins[_currentRun] 
                 + ";" + resultAsString() 
                 + ";" + _correct
+                + ";" + counterThreshold
                 );
 
             if (_correct) atm.ok();
@@ -281,5 +296,6 @@ public class StudyMaster2001 : MonoBehaviour {
     private void OnDestroy()
     {
         resultWriter.Close();
+        digitWriter.Close();
     }
 }

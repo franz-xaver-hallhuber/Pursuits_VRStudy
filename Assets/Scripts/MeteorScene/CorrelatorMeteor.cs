@@ -60,6 +60,8 @@ public class CorrelatorMeteor : MonoBehaviour {
     // name of the current selected object
     string selection;
 
+    private VisualDegrees vg;
+
     // list, in which all trackable objects in the scene are stored
     List<MovingMeteor> sceneObjects;
 
@@ -67,7 +69,7 @@ public class CorrelatorMeteor : MonoBehaviour {
     MovingObject gazeTrajectory;
 
     // logfiles
-    private StreamWriter correlationWriter, selectionWriter;
+    private StreamWriter correlationWriter, selectionWriter, counterWriter;
     private String logFolder = "Logfiles";
     
     // Timespan to measure the duration of calculating a correlation factor for all objects in sceneObjects
@@ -76,11 +78,6 @@ public class CorrelatorMeteor : MonoBehaviour {
 
     Coroutine correlationCoroutine;
     
-    // Use this for initialization
-    void Start () {
-       
-        
-	}
 
     public void selectAim()
     {
@@ -107,18 +104,43 @@ public class CorrelatorMeteor : MonoBehaviour {
 
         correlationWriter = new StreamWriter(logFolder + @"\log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         selectionWriter = new StreamWriter(logFolder + @"\log_Selection_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+        counterWriter= new StreamWriter(logFolder + @"\log_Counter_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv",false);
 
         // logfile for correlator: name of GameObject; timestamp; corr.value x; corr.value y; w; coefficient average window; correlation frequency;
         // selected correlation (Pearson/Spearman); source for gaze data (left/right/both);
         correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye;");
 
         // comparison of what is selected vs what the participant is told to look at
-        selectionWriter.WriteLine("timestamp;selectionTime;selectedObject;targetMeteor;correct?;correlationToIntendedObject;distanceToIntendedObject;radius;center;size;counterThreshold;"
+        selectionWriter.WriteLine("timestamp;selectionTime;selectedObject;selectedSizeDeg;targetMeteor;targetSizeDeg;correct?;correlationToIntendedObject;distanceToIntendedObject;radius;center;size;counterThreshold;"
             + "correlationThreshold;correlationAverageWindow;correlationFrequency;w");
+        
+        counterWriter.WriteLine("timestamp;selectedObject;intendedObject;1;2;3;4;5;6;7;8;9;10");
+
+        vg = new VisualDegrees();
+        vg.Init(participantID);
 
         return logFolder;
     }
     
+    /// <summary>
+    /// log counters of all scene Objecs
+    /// make sure this is only called when counters are not altered
+    /// </summary>
+    private void logCounters()
+    {
+        string write = PupilGazeTracker.Instance._globalTime.TotalSeconds+"";
+        write += ";" + selection;
+        write += ";" + lookAt + "";
+        //write += ";" + sceneObjects[selected].counter; always threshold +1
+        
+        // looping over original list is no problem due to read access only
+        foreach (MovingMeteor mm in sceneObjects)
+        {
+            write += ";" + mm.counter;
+        }
+
+        counterWriter.WriteLine(write);
+    }
 
     public void setAimAndStartCoroutine()
     {
@@ -144,8 +166,14 @@ public class CorrelatorMeteor : MonoBehaviour {
                 if (!mm.recalibrateOnce)
                 {
                     StartCoroutine(mm.increaseDeg());
+                    while (!mm.recalibrateOnce) yield return null;
+                    if (mm.tooBig)
+                    {
+                        sceneObjects.Remove(mm);
+                        mm.killMe();
+                        break;
+                    }
                 }
-                while (!mm.recalibrateOnce) yield return null;
             }
         }
     }
@@ -332,9 +360,9 @@ public class CorrelatorMeteor : MonoBehaviour {
 
             // work with copies to (hopefully) improve performance
             _cloningInProgress = true;
-            foreach (MovingMeteor mo in sceneObjects) _tempObjects.Add((MovingMeteor)mo.Clone()); 
+            foreach (MovingMeteor mo in sceneObjects) _tempObjects.Add((MovingMeteor)mo.Clone());
 
-            MovingObject _tempGaze = (MovingObject) gazeTrajectory.Clone();
+            MovingObject _tempGaze = (MovingObject)gazeTrajectory.Clone();
             _cloningInProgress = false;
 
             List<double> _tempXPgaze = new List<double>(_tempGaze.getXPoints());
@@ -357,7 +385,7 @@ public class CorrelatorMeteor : MonoBehaviour {
                     // in cases where an object only moves along one axis, replace NaN with 0
                     if (double.IsNaN(coeffX)) { coeffX = 0; }
                     if (double.IsNaN(coeffY)) { coeffY = 0; }
-                    
+
                     // add result to the original list
                     //Debug.Log("adding to results list: " + mo.name + "," + calcStart + "," + coeffX + "," + coeffY);
                     results.Add((float)sceneObjects.Find(x => x.Equals(mo)).addSample(calcStart, (coeffX + coeffY) / 2, corrWindow));
@@ -370,7 +398,7 @@ public class CorrelatorMeteor : MonoBehaviour {
                 }
             }
 
-           
+
 
             //Debug.Log("lookAt " + lookAt);
             //MovingMeteor intention = (MovingMeteor)sceneObjects.Find(x => x.Equals(lookAt + "")).Clone();
@@ -394,35 +422,43 @@ public class CorrelatorMeteor : MonoBehaviour {
                     if (justCount)
                     {
                         sceneObjects[i].counter++;
-                        if (sceneObjects[i].counter > counterThreshold)
+                        if (sceneObjects[i].counter >= counterThreshold)
                         {
                             MovingMeteor mm = sceneObjects[i];
-                            mm.activate(true);
                             
+
                             selection = _tempObjects[i].name;
+                            logCounters();
 
-                            selectionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds
-                                + ";" + (PupilGazeTracker.Instance._globalTime - _lastExplosion).TotalSeconds
-                                + ";" + selection
-                                + ";" + lookAt
-                                + ";" + mm.aim
-                                + ";" + resemblance(_tempObjects[i],_tempObjects.Find(x => x.Equals(lookAt+"")))
-                                + ";" + Vector2.Distance(_tempObjects[i]._current, _tempObjects.Find(x => x.Equals(lookAt + ""))._current)
-                                + ";" + mm.getRadius()
-                                + ";" + mm.getCenter()
-                                + ";" + mm.whatsMySize()
-                                + ";" + counterThreshold
-                                + ";" + threshold
-                                + ";" + corrWindow
-                                + ";" + corrFrequency
-                                + ";" + w
-                                );
-
+                            if (lookAt > 0)
+                            {
+                                selectionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds
+                                    + ";" + (PupilGazeTracker.Instance._globalTime - _lastExplosion).TotalSeconds
+                                    + ";" + selection
+                                    + ";" + vg.GetWidthInDeg(_tempObjects[i].getGameObject())
+                                    + ";" + lookAt
+                                    + ";" + vg.GetWidthInDeg(_tempObjects.Find(x => x.Equals(lookAt + "")).getGameObject())
+                                    + ";" + mm.aim
+                                    + ";" + resemblance(_tempObjects[i], _tempObjects.Find(x => x.Equals(lookAt + "")))
+                                    + ";" + Vector2.Distance(_tempObjects[i]._current, _tempObjects.Find(x => x.Equals(lookAt + ""))._current)
+                                    + ";" + mm.getRadius()
+                                    + ";" + mm.getCenter()
+                                    + ";" + mm.whatsMySize()
+                                    + ";" + counterThreshold
+                                    + ";" + threshold
+                                    + ";" + corrWindow
+                                    + ";" + corrFrequency
+                                    + ";" + w
+                                    );
+                            }
+                            mm.activate(true);
                             clearTrajectories();
                             sceneObjects.Remove(mm);
                             yield return new WaitForSeconds(3);
                             _lastExplosion = PupilGazeTracker.Instance._globalTime;
                             mm.killMe();
+
+                            break;
                         }
                     }
 
@@ -447,13 +483,21 @@ public class CorrelatorMeteor : MonoBehaviour {
     private double resemblance(MovingMeteor wrong, MovingMeteor correct)
     {
         //Debug.Log("wrong: " + (wrong == null) + " correct: " + (correct == null));
-        double pearsonX = Pearson.calculatePearson(wrong.getXPoints(), correct.getXPoints());
-        double pearsonY = Pearson.calculatePearson(wrong.getYPoints(), correct.getYPoints());
+        double _ret = -1;
 
-        if (double.IsNaN(pearsonX)) { pearsonX = 0; }
-        if (double.IsNaN(pearsonY)) { pearsonY = 0; }
+        // ensure objects are not null
+        if (!((wrong == null) || (correct == null)))
+        {
+            double pearsonX = Pearson.calculatePearson(wrong.getXPoints(), correct.getXPoints());
+            double pearsonY = Pearson.calculatePearson(wrong.getYPoints(), correct.getYPoints());
 
-        return ((pearsonX + pearsonY) / 2);
+            if (double.IsNaN(pearsonX)) { pearsonX = 0; }
+            if (double.IsNaN(pearsonY)) { pearsonY = 0; }
+
+            _ret = ((pearsonX + pearsonY) / 2);
+        }
+        
+        return _ret;
     }
 
     public int endTrial()
@@ -469,6 +513,7 @@ public class CorrelatorMeteor : MonoBehaviour {
 
         correlationWriter.Close();
         selectionWriter.Close();
+        counterWriter.Close();
         gazeTrajectory.killMe();
         return 0;
     }

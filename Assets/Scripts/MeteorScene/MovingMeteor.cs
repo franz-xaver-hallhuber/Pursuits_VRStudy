@@ -19,7 +19,10 @@ namespace Assets.Scripts
         public int counter = 0;
         public TimeSpan creationTime;
 
+        // indicates whether the object has already been repositioning dur to overlapping
         public bool recalibrateOnce = false;
+        // indicated whether the time limit during recalibration has been reached, i.e. the object is too big for its trajectory
+        public bool tooBig = false;
         
         static bool copyinprogress, updateinprogess;
         public GameObject myExplosion;
@@ -100,15 +103,26 @@ namespace Assets.Scripts
             return go.GetComponent<CircularMovement>().localCenter;
         }
 
+        public GameObject getGameObject()
+        {
+            return go;
+        }
+
         public IEnumerator increaseDeg()
         {
             TimeSpan startCalib = PupilGazeTracker.Instance._globalTime;
-            while (go.GetComponentInChildren<MeteorCollider>().isOverlapping && (PupilGazeTracker.Instance._globalTime-startCalib).TotalSeconds < 0.2)
+            while (go.GetComponentInChildren<MeteorCollider>().isOverlapping)
             {
                 go.GetComponentInChildren<CircularMovement>().nextRad++;
+                if ((PupilGazeTracker.Instance._globalTime - startCalib).TotalSeconds < 0.2)
+                {
+                    tooBig = true;
+                    break;
+                }
                 yield return null;
             }
             recalibrateOnce = true;
+            if (!tooBig) go.GetComponentInChildren<MeshRenderer>().enabled = true;
         }
 
         public void startMoving()
