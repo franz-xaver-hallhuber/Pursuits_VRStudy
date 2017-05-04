@@ -39,12 +39,14 @@ public class ObjectToPx : MonoBehaviour {
         minMaxValues.Add(new Vector3(goBounds.center.x + goBounds.extents.x, goBounds.center.y - goBounds.extents.y, goBounds.center.z - goBounds.extents.z));
         minMaxValues.Add(new Vector3(goBounds.center.x + goBounds.extents.x, goBounds.center.y - goBounds.extents.y, goBounds.center.z + goBounds.extents.z));
 
+        Debug.Log(goBounds.ToString());
+
         float maxX = 0, maxY = 0, minX = Screen.width, minY = Screen.height;
 
         foreach (Vector3 x in minMaxValues)
         {
-            gameObject.transform.TransformPoint(x);
-            Vector3 screenPoint = ViveCamera.WorldToScreenPoint(x);
+            
+            Vector3 screenPoint = ViveCamera.WorldToScreenPoint(go.transform.TransformPoint(x));
             if (screenPoint.x < minX) minX = screenPoint.x;
             if (screenPoint.x > maxX) maxX = screenPoint.x;
             if (screenPoint.y < minY) minY = screenPoint.y;

@@ -314,7 +314,7 @@ namespace Assets.Scripts
 
         public object Clone()
         {
-            while (updateinprogess) { GameObject.Find("Lag").GetComponent<LagScript>().blink(); }
+            while (updateinprogess) {  }
             copyinprogress = true; // prevents trajectory list from being altered while creating copies
             MovingObject newMo = (MovingObject)this.MemberwiseClone();
             

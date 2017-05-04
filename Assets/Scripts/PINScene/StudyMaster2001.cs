@@ -208,7 +208,7 @@ public class StudyMaster2001 : MonoBehaviour {
                     + ";" + (PupilGazeTracker.Instance._globalTime - digitStart).TotalSeconds
                     + ";" + digits[_currentDigit].ToString()
                     + ";" + coco.selection
-                    + ";" + (Convert.ToInt32( coco.selection) == digits[_currentDigit])
+                    + ";" + (Convert.ToInt32(coco.selection) == digits[_currentDigit])
                     + ";" + counterThreshold
                 );
 

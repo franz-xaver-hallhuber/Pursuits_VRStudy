@@ -1,0 +1,5 @@
+Timestamp;SelectionTime;IntendedDigit;EnteredDigit;correct;counterThreshold
+13.1393009;3.8652409;2;2;True;15
+16.4786425;2.8450329;5;5;True;15
+20.4551784;3.4817252;6;6;True;15
+24.0158575;3.0668714;0;0;True;15

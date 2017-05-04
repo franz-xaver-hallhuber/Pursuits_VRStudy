@@ -31,6 +31,8 @@ public class CalibProcedure : MonoBehaviour {
         GUI.Box(new Rect(0, 80, 300, 30), "Enter maximum FOV in degrees.");
         maxFOV = GUI.TextArea(new Rect(300, 80, 40, 30), maxFOV);
 
+        GUI.Box(new Rect(300, 80, 200, 30), "xBox: " + GetComponent<ObjectToPx>().getAbsolutePxSize(xBox).ToString());
+
         GUI.Box(new Rect(0, 110, 300, 30), "Enter minimum x");
         minX = GUI.TextArea(new Rect(300, 110, 40, 30), minX);
 

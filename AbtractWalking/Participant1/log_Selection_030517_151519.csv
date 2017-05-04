@@ -1,0 +1,2 @@
+Timestamp;SelectionTime;Name;smoothCorrel;intendedObject;correlationToIntendedObject;correct?;threshold;w;corrWindow;corrFrequency
+30.0343688;3.9131974;2;0.6834587;2;1;True;0.6;300;900;0.3;
