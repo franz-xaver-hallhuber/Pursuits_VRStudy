@@ -93,10 +93,10 @@ public class StudyMasterMeteor : MonoBehaviour {
                 
                 for (int i = 0; i<_atOnce ; i++)
                 {
-                    GameObject _newMeteor = GameObject.Instantiate(meteorPrefab, new Vector3(0, 0, 0), UnityEngine.Random.rotation, eyeCam.transform);
-                    _newMeteor.transform.localPosition = new Vector3(_newCenter.x,_newCenter.y, 6+_newCenter.z); // because Instantiate location is global
+                    GameObject _newMeteor = GameObject.Instantiate(meteorPrefab, new Vector3(0, 0, 0), Quaternion.identity, eyeCam.transform);
+                    _newMeteor.transform.localPosition = new Vector3(_newCenter.x, _newCenter.y, 6); // +_newCenter.z); // because Instantiate location is global
                     _newMeteor.tag = "Trackable";
-                    _newMeteor.transform.localScale = new Vector3(_scale, _scale, _scale);
+                    _newMeteor.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
                     _newMeteor.name = meteorCounter++.ToString();
                     _newMeteor.GetComponentInChildren<MeshRenderer>().enabled = false;
                     

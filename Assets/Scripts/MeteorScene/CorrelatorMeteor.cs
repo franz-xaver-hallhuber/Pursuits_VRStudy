@@ -430,7 +430,7 @@ public class CorrelatorMeteor : MonoBehaviour {
                             selection = _tempObjects[i].name;
                             logCounters();
 
-                            if (lookAt > 0)
+                            if (lookAt >= 0)
                             {
                                 selectionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds
                                     + ";" + (PupilGazeTracker.Instance._globalTime - _lastExplosion).TotalSeconds

@@ -54,15 +54,28 @@ public class VisualDegrees : MonoBehaviour {
     public double GetWidthInDeg(GameObject go)
     {
         double _ret;
-        Bounds goBounds = go.GetComponentInChildren<MeshFilter>().mesh.bounds;
+
+        // create an instance of the object
+        GameObject _tempObj = GameObject.Instantiate(go);
+
+        // deactivate its MeshRenderer
+        // _tempObj.GetComponent<MeshRenderer>().enabled = false;
+
+        // get bounds.extents for further calculation
+        Bounds tempBounds = _tempObj.GetComponentInChildren<Renderer>().bounds;
+
+        // destroy temporary object
+        Destroy(_tempObj);
+
+        // get size of object
+        float sizeX = tempBounds.size.x;
+        float sizeY = tempBounds.size.y;
 
         double maxWidthAtDepth = 2 * go.transform.localPosition.z * (((Convert.ToDouble(maxX) - Convert.ToDouble(minX)) / 2) / Convert.ToDouble(atDepth));
-
         
+        _ret = (Convert.ToDouble(maxFOV) * sizeX / maxWidthAtDepth);
 
-        _ret = (Convert.ToDouble(maxFOV) * goBounds.size.x / maxWidthAtDepth);
-
-        Debug.Log("Object: " + go.name + " has width " + goBounds.size.x + " in deg " + _ret);
+        Debug.Log("Object " + go.name + " has angle " + _ret);
 
         return _ret;
     }
