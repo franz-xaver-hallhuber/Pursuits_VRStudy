@@ -117,7 +117,7 @@ public class CorrelatorMeteor : MonoBehaviour {
         counterWriter.WriteLine("timestamp;selectedObject;intendedObject;1;2;3;4;5;6;7;8;9;10");
 
         vg = new VisualDegrees();
-        vg.Init(participantID);
+        vg.Init(participantID,GameObject.Find("Camera (eye)").GetComponent<Camera>());
 
         return logFolder;
     }
@@ -435,9 +435,9 @@ public class CorrelatorMeteor : MonoBehaviour {
                                 selectionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds
                                     + ";" + (PupilGazeTracker.Instance._globalTime - _lastExplosion).TotalSeconds
                                     + ";" + selection
-                                    + ";" + vg.GetWidthInDeg(_tempObjects[i].getGameObject())
+                                    + ";" + vg.RenderWidthInDeg(_tempObjects[i].getGameObject())
                                     + ";" + lookAt
-                                    + ";" + vg.GetWidthInDeg(_tempObjects.Find(x => x.Equals(lookAt + "")).getGameObject())
+                                    + ";" + vg.RenderWidthInDeg(_tempObjects.Find(x => x.Equals(lookAt + "")).getGameObject())
                                     + ";" + mm.aim
                                     + ";" + resemblance(_tempObjects[i], _tempObjects.Find(x => x.Equals(lookAt + "")))
                                     + ";" + Vector2.Distance(_tempObjects[i]._current, _tempObjects.Find(x => x.Equals(lookAt + ""))._current)

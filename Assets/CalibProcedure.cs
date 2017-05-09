@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class CalibProcedure : MonoBehaviour {
 
-    public GameObject xBox, yBox;
+    public GameObject xBox, yBox, camera;
 
     private string maxFOV = "";
     private string minX = "";
@@ -34,22 +34,22 @@ public class CalibProcedure : MonoBehaviour {
         GUI.Box(new Rect(0, 110, 300, 30), "Enter minimum x");
         minX = GUI.TextArea(new Rect(300, 110, 40, 30), minX);
 
-        if (GUI.Button(new Rect(340,110,30,30),"get")) minX=xBox.transform.localPosition.x.ToString();
+        if (GUI.Button(new Rect(340,110,30,30),"get")) minX= camera.GetComponent<Camera>().WorldToScreenPoint(xBox.transform.position).x.ToString();
         
         GUI.Box(new Rect(0, 140, 300, 30), "Enter maximum x");
         maxX = GUI.TextArea(new Rect(300, 140, 40, 30), maxX);
 
-        if (GUI.Button(new Rect(340, 140, 30, 30), "get")) maxX = xBox.transform.localPosition.x.ToString();
+        if (GUI.Button(new Rect(340, 140, 30, 30), "get")) maxX = camera.GetComponent<Camera>().WorldToScreenPoint(xBox.transform.position).x.ToString();
 
         GUI.Box(new Rect(0, 170, 300, 30), "Enter minimum y");
         minY = GUI.TextArea(new Rect(300, 170, 40, 30), minY);
 
-        if (GUI.Button(new Rect(340, 170, 30, 30), "get")) minY = yBox.transform.localPosition.y.ToString();
+        if (GUI.Button(new Rect(340, 170, 30, 30), "get")) minY = camera.GetComponent<Camera>().WorldToScreenPoint(yBox.transform.position).y.ToString();
 
         GUI.Box(new Rect(0, 200, 300, 30), "Enter maximum y");
         maxY = GUI.TextArea(new Rect(300, 200, 40, 30), maxY);
 
-        if (GUI.Button(new Rect(340, 200, 30, 30), "get")) maxY = yBox.transform.localPosition.y.ToString();
+        if (GUI.Button(new Rect(340, 200, 30, 30), "get")) maxY = camera.GetComponent<Camera>().WorldToScreenPoint(yBox.transform.position).y.ToString();
 
         GUI.Box(new Rect(0, 230, 300, 30), "Participant No ");
         participant = GUI.TextArea(new Rect(300, 230, 40, 30), participant, 2);

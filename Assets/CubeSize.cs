@@ -5,7 +5,7 @@ using UnityEngine;
 public class CubeSize : MonoBehaviour {
 
     public GameObject cube, camera, indicator;
-    
+    Rect gui;
 	
 	// Update is called once per frame
 	void Update () {
@@ -15,10 +15,10 @@ public class CubeSize : MonoBehaviour {
         GameObject _tempObj = GameObject.Instantiate(cube);
 
         // deactivate its MeshRenderer
-        _tempObj.GetComponent<MeshRenderer>().enabled = false;
+        //_tempObj.GetComponent<MeshRenderer>().enabled = false;
         
         // get bounds.extents for further calculation
-        Bounds tempBounds = _tempObj.GetComponentInChildren<Renderer>().bounds;
+        Bounds tempBounds = _tempObj.GetComponentInChildren<MeshCollider>().bounds;
         _deb += "extents: " + tempBounds.extents.ToString();
 
         // destroy temporary object
@@ -26,22 +26,22 @@ public class CubeSize : MonoBehaviour {
 
         // project extents on camera plane
         Vector3 newExtents = camera.transform.rotation * tempBounds.extents;
-        _deb += " projectedExt: " + newExtents.ToString();
+        //_deb += " projectedExt: " + newExtents.ToString();
 
         // use original object's center and tempObject's extents
         Bounds goBounds = cube.GetComponent<Renderer>().bounds;
         List<Vector3> minMaxValues = new List<Vector3>();
         
-        indicator.transform.position = newExtents;
+        //indicator.transform.position = newExtents;
 
-        minMaxValues.Add(new Vector3(cube.transform.localPosition.x - tempBounds.extents.x, cube.transform.localPosition.y + tempBounds.extents.y, cube.transform.localPosition.z - tempBounds.extents.z));
-        minMaxValues.Add(new Vector3(cube.transform.localPosition.x - tempBounds.extents.x, cube.transform.localPosition.y + tempBounds.extents.y, cube.transform.localPosition.z + tempBounds.extents.z));
-        minMaxValues.Add(new Vector3(cube.transform.localPosition.x - tempBounds.extents.x, cube.transform.localPosition.y - tempBounds.extents.y, cube.transform.localPosition.z - tempBounds.extents.z));
-        minMaxValues.Add(new Vector3(cube.transform.localPosition.x - tempBounds.extents.x, cube.transform.localPosition.y - tempBounds.extents.y, cube.transform.localPosition.z + tempBounds.extents.z));
-        minMaxValues.Add(new Vector3(cube.transform.localPosition.x + tempBounds.extents.x, cube.transform.localPosition.y + tempBounds.extents.y, cube.transform.localPosition.z - tempBounds.extents.z));
-        minMaxValues.Add(new Vector3(cube.transform.localPosition.x + tempBounds.extents.x, cube.transform.localPosition.y + tempBounds.extents.y, cube.transform.localPosition.z + tempBounds.extents.z));
-        minMaxValues.Add(new Vector3(cube.transform.localPosition.x + tempBounds.extents.x, cube.transform.localPosition.y - tempBounds.extents.y, cube.transform.localPosition.z - tempBounds.extents.z));
-        minMaxValues.Add(new Vector3(cube.transform.localPosition.x + tempBounds.extents.x, cube.transform.localPosition.y - tempBounds.extents.y, cube.transform.localPosition.z + tempBounds.extents.z));
+        minMaxValues.Add(new Vector3(tempBounds.center.x - tempBounds.extents.x, tempBounds.center.y + tempBounds.extents.y, tempBounds.center.z - tempBounds.extents.z));
+        minMaxValues.Add(new Vector3(tempBounds.center.x - tempBounds.extents.x, tempBounds.center.y + tempBounds.extents.y, tempBounds.center.z + tempBounds.extents.z));
+        minMaxValues.Add(new Vector3(tempBounds.center.x - tempBounds.extents.x, tempBounds.center.y - tempBounds.extents.y, tempBounds.center.z - tempBounds.extents.z));
+        minMaxValues.Add(new Vector3(tempBounds.center.x - tempBounds.extents.x, tempBounds.center.y - tempBounds.extents.y, tempBounds.center.z + tempBounds.extents.z));
+        minMaxValues.Add(new Vector3(tempBounds.center.x + tempBounds.extents.x, tempBounds.center.y + tempBounds.extents.y, tempBounds.center.z - tempBounds.extents.z));
+        minMaxValues.Add(new Vector3(tempBounds.center.x + tempBounds.extents.x, tempBounds.center.y + tempBounds.extents.y, tempBounds.center.z + tempBounds.extents.z));
+        minMaxValues.Add(new Vector3(tempBounds.center.x + tempBounds.extents.x, tempBounds.center.y - tempBounds.extents.y, tempBounds.center.z - tempBounds.extents.z));
+        minMaxValues.Add(new Vector3(tempBounds.center.x + tempBounds.extents.x, tempBounds.center.y - tempBounds.extents.y, tempBounds.center.z + tempBounds.extents.z));
 
         float maxX = 0, maxY = 0, minX = float.MaxValue, minY = float.MaxValue;
 
@@ -53,10 +53,16 @@ public class CubeSize : MonoBehaviour {
             if (screenPoint.y < minY) minY = screenPoint.y;
             if (screenPoint.y > maxY) maxY = screenPoint.y;
         }
-        
-        _deb += " center: " + goBounds.center;
+
+        //_deb += " center: " + goBounds.center;
+        gui = new Rect(minX, minY, maxX - minX, maxY - minY);
         _deb += " minX: " + minX + " maxX " + maxX + " diff " + (maxX-minX);
         Debug.Log(_deb);
 
+    }
+
+    private void OnGUI()
+    {
+        GUI.Box(gui, "");
     }
 }
