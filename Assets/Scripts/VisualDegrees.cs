@@ -94,24 +94,28 @@ public class VisualDegrees : MonoBehaviour {
         
         // ########### (1) compute x-angle
         float Xalpha = fmaxFOVX / 2; // half the total field of view in degrees
-        float Xd = (fmaxX - fminX) / (2 * Mathf.Tan(Xalpha)); // get viewing distance in px
+        float Xd = (fmaxX - fminX) / (2 * Mathf.Tan(Xalpha*Mathf.Deg2Rad)); // get viewing distance in px
         float Xbeta; // angle between min and (fmax-fmin)/2
         float Xgamma; // angle between max and (fmax-fmin)/2 
+        float Xmiddle; // exact middle of fov in px
 
-        Xbeta = Mathf.Atan2(Mathf.Abs((fmaxX - fminX) / 2 - bounds[0]), Xd);
-        Xgamma = Mathf.Atan2(Mathf.Abs((fmaxX - fminX) / 2 - bounds[1]), Xd);
+        Xmiddle = fminX + (fmaxX - fminX) / 2;
+
+        Xbeta = Mathf.Atan2(Mathf.Abs(Xmiddle - bounds[0]), Xd)*Mathf.Rad2Deg;
+        Xgamma = Mathf.Atan2(Mathf.Abs(Xmiddle - bounds[1]), Xd) * Mathf.Rad2Deg;
+        
 
         
         // minX < (fmaxX - fminX) / 2)
-        if (bounds[0] < (fmaxX - fminX) / 2)
+        if (bounds[0] < Xmiddle)
         {
-            if (bounds[1] < (fmaxX - fminX) / 2) _ret.x = Xbeta - Xgamma;
+            if (bounds[1] < Xmiddle) _ret.x = Xbeta - Xgamma;
             else _ret.x = Xbeta + Xgamma;
         }
         // minX > (fmaxX - fminX) / 2)
-        else if (bounds[0] > (fmaxX - fminX) / 2)
+        else if (bounds[0] > Xmiddle)
         {
-            if (bounds[1] < (fmaxX - fminX) / 2) throw new Exception("min>max!!");
+            if (bounds[1] < Xmiddle) throw new Exception("min>max!!");
             else _ret.x = _ret.x = -Xbeta + Xgamma;
         }
         else
@@ -139,7 +143,7 @@ public class VisualDegrees : MonoBehaviour {
         _tempObj.GetComponent<MeshRenderer>().enabled = false;
 
         // get bounds.extents for further calculation
-        Bounds tempBounds = _tempObj.GetComponentInChildren<MeshCollider>().bounds;
+        Bounds tempBounds = _tempObj.GetComponentInChildren<BoxCollider>().bounds;
 
         // destroy temporary object
         Destroy(_tempObj);
