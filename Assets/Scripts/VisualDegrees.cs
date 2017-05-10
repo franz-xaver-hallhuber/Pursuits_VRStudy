@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class VisualDegrees : MonoBehaviour {
 
-    private string maxFOV;
+    private string maxFOVX;
     private string minX;
     private string maxX;
     private string minY;
@@ -14,14 +14,19 @@ public class VisualDegrees : MonoBehaviour {
     private string participant;
     private string atDepth;
 
+    private float fmaxFOVX;
+    private float fminX;
+    private float fmaxX;
+    private float fminY;
+    private float fmaxY;
+    private float fparticipant;
+    private float fatDepth;
+
     private Camera ec;
 
     public string UserDataFile = @"UserCalibData\UserData.csv";
     
-    // Use this for initialization
-    void Start () {
-		
-	}
+ 
 	
     public void Init(int userID, Camera eyeCam)
     {
@@ -34,22 +39,22 @@ public class VisualDegrees : MonoBehaviour {
                 string[] userData = s.Split(';');
                 if (userData.Length == 7)
                 {
-                    maxFOV = userData[1];
-                    minX = userData[2];
-                    maxX = userData[3];
-                    minY = userData[4];
-                    maxY = userData[5];
-                    atDepth = userData[6];
+                    fmaxFOVX = Convert.ToSingle(userData[1]);
+                    fminX = Convert.ToSingle(userData[2]);
+                    fmaxX = Convert.ToSingle(userData[3]);
+                    fminY = Convert.ToSingle(userData[4]);
+                    fmaxY = Convert.ToSingle(userData[5]);
+                    fatDepth = Convert.ToSingle(userData[6]);
 
                     return;
                 } else
                 {
-                    Debug.LogError("User Data File Corrupted");
+                    throw new FormatException("Wrong UserCalib File format!");
                 }
             }
         }
 
-        Debug.LogError("Participant not found. Make sure calibration was executed.");
+        throw new KeyNotFoundException("Participant not found. Make sure calibration was executed.");
     }
 
     public double RenderWidthInDeg(GameObject go)
@@ -74,7 +79,7 @@ public class VisualDegrees : MonoBehaviour {
 
         double maxWidthAtDepth = 2 * go.transform.localPosition.z * (((Convert.ToDouble(maxX) - Convert.ToDouble(minX)) / 2) / Convert.ToDouble(atDepth));
         
-        _ret = (Convert.ToDouble(maxFOV) * sizeX / maxWidthAtDepth);
+        _ret = (Convert.ToDouble(maxFOVX) * sizeX / maxWidthAtDepth);
 
         Debug.Log("Object " + go.name + " has angle " + _ret);
 
@@ -83,11 +88,49 @@ public class VisualDegrees : MonoBehaviour {
 
     public Vector2 ScreenSizeInDeg(GameObject go)
     {
-        Vector2 pxSz = ObjectSizeInPx(go);
-        return new Vector2((pxSz.x * Convert.ToSingle(maxFOV) / (Convert.ToSingle(maxX) - Convert.ToSingle(minX))),0);
+        Vector2 _ret = new Vector2();
+
+        float[] bounds = getObjectBoundsPx(go);
+        
+        // ########### (1) compute x-angle
+        float Xalpha = fmaxFOVX / 2; // half the total field of view in degrees
+        float Xd = (fmaxX - fminX) / (2 * Mathf.Tan(Xalpha)); // get viewing distance in px
+        float Xbeta; // angle between min and (fmax-fmin)/2
+        float Xgamma; // angle between max and (fmax-fmin)/2 
+
+        Xbeta = Mathf.Atan2(Mathf.Abs((fmaxX - fminX) / 2 - bounds[0]), Xd);
+        Xgamma = Mathf.Atan2(Mathf.Abs((fmaxX - fminX) / 2 - bounds[1]), Xd);
+
+        
+        // minX < (fmaxX - fminX) / 2)
+        if (bounds[0] < (fmaxX - fminX) / 2)
+        {
+            if (bounds[1] < (fmaxX - fminX) / 2) _ret.x = Xbeta - Xgamma;
+            else _ret.x = Xbeta + Xgamma;
+        }
+        // minX > (fmaxX - fminX) / 2)
+        else if (bounds[0] > (fmaxX - fminX) / 2)
+        {
+            if (bounds[1] < (fmaxX - fminX) / 2) throw new Exception("min>max!!");
+            else _ret.x = _ret.x = -Xbeta + Xgamma;
+        }
+        else
+        {
+            // TODO: xMin is x/2 ??
+        }
+
+        // ########### (2) compute y-angle
+        // TODO: How to get vertical FOV?
+
+        return _ret;
     }
 
-    public Vector2 ObjectSizeInPx(GameObject go)
+    /// <summary>
+    /// Returns GameObject bounds in px
+    /// </summary>
+    /// <param name="go">Respective GameObject</param>
+    /// <returns>float[] {minX,maxX,minY,maxY}</returns>
+    public float[] getObjectBoundsPx(GameObject go)
     {
         // create an instance of the object
         GameObject _tempObj = GameObject.Instantiate(go);
@@ -100,14 +143,10 @@ public class VisualDegrees : MonoBehaviour {
 
         // destroy temporary object
         Destroy(_tempObj);
-
-        // project extents on camera plane
-        Vector3 newExtents = ec.transform.rotation * tempBounds.extents;
-        //_deb += " projectedExt: " + newExtents.ToString();
         
         // calculate extents
         List<Vector3> minMaxValues = new List<Vector3>();
-        
+
         minMaxValues.Add(new Vector3(tempBounds.center.x - tempBounds.extents.x, tempBounds.center.y + tempBounds.extents.y, tempBounds.center.z - tempBounds.extents.z));
         minMaxValues.Add(new Vector3(tempBounds.center.x - tempBounds.extents.x, tempBounds.center.y + tempBounds.extents.y, tempBounds.center.z + tempBounds.extents.z));
         minMaxValues.Add(new Vector3(tempBounds.center.x - tempBounds.extents.x, tempBounds.center.y - tempBounds.extents.y, tempBounds.center.z - tempBounds.extents.z));
@@ -128,6 +167,17 @@ public class VisualDegrees : MonoBehaviour {
             if (screenPoint.y > maxY) maxY = screenPoint.y;
         }
 
-        return new Vector2(maxX - minX, maxY - minY);
+        return new float[] { minX,maxX,minY,maxY };
+    }
+
+    /// <summary>
+    /// Returns Object size in px
+    /// </summary>
+    /// <param name="go">Respective GameObject</param>
+    /// <returns>Vector2(width,height)</returns>
+    public Vector2 ObjectSizeInPx(GameObject go)
+    {
+        float[] bounds = getObjectBoundsPx(go);
+        return new Vector2(bounds[0] - bounds[1], bounds[2] - bounds[3]);
     }
 }

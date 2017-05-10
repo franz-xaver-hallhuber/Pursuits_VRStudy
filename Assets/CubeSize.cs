@@ -6,12 +6,18 @@ public class CubeSize : MonoBehaviour {
 
     public GameObject cube, camera, indicator;
     Rect gui;
-	
-	// Update is called once per frame
-	void Update () {
-        string _deb = "";
+    VisualDegrees vd;
 
-        // create an instance of the object
+    void Start()
+    {
+        vd.Init(2, camera.GetComponent<Camera>());
+    }
+
+    // Update is called once per frame
+    void Update () {
+        string _deb = "";
+        
+        // create an copy of the object with the same 
         GameObject _tempObj = GameObject.Instantiate(cube);
 
         // deactivate its MeshRenderer
