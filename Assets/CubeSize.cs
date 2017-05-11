@@ -11,7 +11,7 @@ public class CubeSize : MonoBehaviour {
     void Start()
     {
         vd = new VisualDegrees();
-        vd.Init(98, camera.GetComponent<Camera>());
+        vd.Init(99, camera.GetComponent<Camera>());
     }
 
     // Update is called once per frame

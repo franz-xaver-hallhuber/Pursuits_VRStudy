@@ -103,6 +103,15 @@ namespace Assets.Scripts
             return go.GetComponent<CircularMovement>().localCenter;
         }
 
+        public Vector3[] getMinMaxInWorldCoor()
+        {
+            Vector3 min = new Vector3(getCenter().x - getRadius(), getCenter().y, getCenter().z);
+            Vector3 max = new Vector3(getCenter().x + getRadius(), getCenter().y, getCenter().z);
+
+            Vector3[] movementExtents = { min, max };
+            return movementExtents;
+        }
+
         public GameObject getGameObject()
         {
             return go;

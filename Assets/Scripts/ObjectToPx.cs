@@ -55,4 +55,6 @@ public class ObjectToPx : MonoBehaviour {
 
         return new Vector2(maxX-minX,maxY-minY);
     }
+
+
 }

@@ -199,8 +199,8 @@ public class StudyMaster2001 : MonoBehaviour {
                 StartCoroutine(Flash());
 
                 //get result from correlator and flash feedback
-                if (coco.selection == "") result.Add(-1);
-                else
+                if (coco.selection == "") coco.selection = "-1";
+                
                     result.Add(Convert.ToInt32(coco.selection));
 
 

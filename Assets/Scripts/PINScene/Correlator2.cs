@@ -410,7 +410,7 @@ public class Correlator2 : MonoBehaviour {
 
                 }
             }
-            else Debug.Log("skip");
+            //else Debug.Log("skip");
             _pearsonIsRunning = false;
 
             calcDur = PupilGazeTracker.Instance._globalTime - calcStart;

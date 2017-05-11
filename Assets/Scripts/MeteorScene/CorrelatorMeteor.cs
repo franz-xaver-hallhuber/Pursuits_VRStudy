@@ -111,7 +111,7 @@ public class CorrelatorMeteor : MonoBehaviour {
         correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye;");
 
         // comparison of what is selected vs what the participant is told to look at
-        selectionWriter.WriteLine("timestamp;selectionTime;selectedObject;selectedSizeDeg;targetMeteor;targetSizeDeg;correct?;correlationToIntendedObject;distanceToIntendedObject;radius;center;size;counterThreshold;"
+        selectionWriter.WriteLine("timestamp;selectionTime;selectedObject;selectedXSizeDeg;selectedYSizeDeg;targetMeteor;targetSizeXDeg;targetSizeYDeg;correct?;correlationToIntendedObject;distanceToIntendedObject;radiusUU;centerUU;counterThreshold;"
             + "correlationThreshold;correlationAverageWindow;correlationFrequency;w");
         
         counterWriter.WriteLine("timestamp;selectedObject;intendedObject;1;2;3;4;5;6;7;8;9;10");
@@ -426,30 +426,34 @@ public class CorrelatorMeteor : MonoBehaviour {
                         {
                             MovingMeteor mm = sceneObjects[i];
                             
-
                             selection = _tempObjects[i].name;
                             logCounters();
 
                             if (lookAt >= 0)
                             {
-                                selectionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds
-                                    + ";" + (PupilGazeTracker.Instance._globalTime - _lastExplosion).TotalSeconds
-                                    + ";" + selection
-                                    + ";" + vg.RenderWidthInDeg(_tempObjects[i].getGameObject())
-                                    + ";" + lookAt
-                                    + ";" + vg.RenderWidthInDeg(_tempObjects.Find(x => x.Equals(lookAt + "")).getGameObject())
-                                    + ";" + mm.aim
-                                    + ";" + resemblance(_tempObjects[i], _tempObjects.Find(x => x.Equals(lookAt + "")))
-                                    + ";" + Vector2.Distance(_tempObjects[i]._current, _tempObjects.Find(x => x.Equals(lookAt + ""))._current)
-                                    + ";" + mm.getRadius()
-                                    + ";" + mm.getCenter()
-                                    + ";" + mm.whatsMySize()
-                                    + ";" + counterThreshold
-                                    + ";" + threshold
-                                    + ";" + corrWindow
-                                    + ";" + corrFrequency
-                                    + ";" + w
-                                    );
+                                try
+                                {
+                                    selectionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds
+                                        + ";" + (PupilGazeTracker.Instance._globalTime - _lastExplosion).TotalSeconds
+                                        + ";" + selection
+                                        + ";" + vg.ScreenSizeInDeg(_tempObjects[i].getGameObject()).x
+                                        + ";" + vg.ScreenSizeInDeg(_tempObjects[i].getGameObject()).y
+                                        + ";" + lookAt
+                                        + ";" + vg.ScreenSizeInDeg(_tempObjects.Find(x => x.Equals(lookAt + "")).getGameObject()).x
+                                        + ";" + vg.ScreenSizeInDeg(_tempObjects.Find(x => x.Equals(lookAt + "")).getGameObject()).y
+                                        + ";" + mm.aim
+                                        + ";" + resemblance(_tempObjects[i], _tempObjects.Find(x => x.Equals(lookAt + "")))
+                                        + ";" + Vector2.Distance(_tempObjects[i]._current, _tempObjects.Find(x => x.Equals(lookAt + ""))._current)
+                                        + ";" + vg.radiusWidthInDeg(mm.getMinMaxInWorldCoor()[0], mm.getMinMaxInWorldCoor()[1])
+                                        + ";" + mm.getCenter()
+                                        + ";" + counterThreshold
+                                        + ";" + threshold
+                                        + ";" + corrWindow
+                                        + ";" + corrFrequency
+                                        + ";" + w
+                                        );
+                                }
+                                catch (Exception e) { Debug.LogError(e.StackTrace); }
                             }
                             mm.activate(true);
                             clearTrajectories();

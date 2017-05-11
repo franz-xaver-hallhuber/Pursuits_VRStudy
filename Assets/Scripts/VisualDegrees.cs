@@ -6,20 +6,14 @@ using UnityEngine;
 
 public class VisualDegrees : MonoBehaviour {
 
-    private string maxFOVX;
-    private string minX;
-    private string maxX;
-    private string minY;
-    private string maxY;
     private string participant;
-    private string atDepth;
 
     private float fmaxFOVX;
+    private float fmaxFOVY;
     private float fminX;
     private float fmaxX;
     private float fminY;
     private float fmaxY;
-    private float fparticipant;
     private float fatDepth;
 
     private Camera ec;
@@ -37,14 +31,15 @@ public class VisualDegrees : MonoBehaviour {
             if (s.StartsWith(participant))
             {
                 string[] userData = s.Split(';');
-                if (userData.Length == 7)
+                if (userData.Length == 8)
                 {
                     fmaxFOVX = Convert.ToSingle(userData[1]);
-                    fminX = Convert.ToSingle(userData[2]);
-                    fmaxX = Convert.ToSingle(userData[3]);
-                    fminY = Convert.ToSingle(userData[4]);
-                    fmaxY = Convert.ToSingle(userData[5]);
-                    fatDepth = Convert.ToSingle(userData[6]);
+                    fmaxFOVY = Convert.ToSingle(userData[2]);
+                    fminX = Convert.ToSingle(userData[3]);
+                    fmaxX = Convert.ToSingle(userData[4]);
+                    fminY = Convert.ToSingle(userData[5]);
+                    fmaxY = Convert.ToSingle(userData[6]);
+                    fatDepth = Convert.ToSingle(userData[7]);
 
                     return;
                 } else
@@ -57,76 +52,119 @@ public class VisualDegrees : MonoBehaviour {
         throw new KeyNotFoundException("Participant not found. Make sure calibration was executed.");
     }
 
-    public double RenderWidthInDeg(GameObject go)
+    //public double RenderWidthInDeg(GameObject go)
+    //{
+    //    double _ret;
+
+    //    // create an instance of the object
+    //    GameObject _tempObj = GameObject.Instantiate(go);
+
+    //    // deactivate its MeshRenderer
+    //    // _tempObj.GetComponent<MeshRenderer>().enabled = false;
+
+    //    // get bounds.extents for further calculation
+    //    Bounds tempBounds = _tempObj.GetComponentInChildren<Renderer>().bounds;
+
+    //    // destroy temporary object
+    //    Destroy(_tempObj);
+
+    //    // get size of object
+    //    float sizeX = tempBounds.size.x;
+    //    float sizeY = tempBounds.size.y;
+
+    //    double maxWidthAtDepth = 2 * go.transform.localPosition.z * ((fmaxX - fminX) / 2) / fatDepth;
+
+    //    _ret = (fmaxFOVX * sizeX / maxWidthAtDepth);
+
+    //    Debug.Log("Object " + go.name + " has angle " + _ret);
+
+    //    return _ret;
+    //}
+
+    public float radiusWidthInDeg(Vector3 minWorld, Vector3 maxWorld)
     {
-        double _ret;
-
-        // create an instance of the object
-        GameObject _tempObj = GameObject.Instantiate(go);
-
-        // deactivate its MeshRenderer
-        // _tempObj.GetComponent<MeshRenderer>().enabled = false;
-
-        // get bounds.extents for further calculation
-        Bounds tempBounds = _tempObj.GetComponentInChildren<Renderer>().bounds;
-
-        // destroy temporary object
-        Destroy(_tempObj);
-
-        // get size of object
-        float sizeX = tempBounds.size.x;
-        float sizeY = tempBounds.size.y;
-
-        double maxWidthAtDepth = 2 * go.transform.localPosition.z * (((Convert.ToDouble(maxX) - Convert.ToDouble(minX)) / 2) / Convert.ToDouble(atDepth));
-        
-        _ret = (Convert.ToDouble(maxFOVX) * sizeX / maxWidthAtDepth);
-
-        Debug.Log("Object " + go.name + " has angle " + _ret);
-
-        return _ret;
+        float[] rBounds = { ec.GetComponent<Camera>().WorldToScreenPoint(minWorld).x, ec.GetComponent<Camera>().WorldToScreenPoint(maxWorld).x, 0,0 };
+        return ScreenSizeInDeg(rBounds).x;
     }
 
-    public Vector2 ScreenSizeInDeg(GameObject go)
+    public Vector2 ScreenSizeInDeg(float[] bounds)
     {
         Vector2 _ret = new Vector2();
 
-        float[] bounds = getObjectBoundsPx(go);
         
+
         // ########### (1) compute x-angle
         float Xalpha = fmaxFOVX / 2; // half the total field of view in degrees
-        float Xd = (fmaxX - fminX) / (2 * Mathf.Tan(Xalpha*Mathf.Deg2Rad)); // get viewing distance in px
+        float Xd = (fmaxX - fminX) / (2 * Mathf.Tan(Xalpha * Mathf.Deg2Rad)); // get viewing distance in px
         float Xbeta; // angle between min and (fmax-fmin)/2
         float Xgamma; // angle between max and (fmax-fmin)/2 
         float Xmiddle; // exact middle of fov in px
 
         Xmiddle = fminX + (fmaxX - fminX) / 2;
 
-        Xbeta = Mathf.Atan2(Mathf.Abs(Xmiddle - bounds[0]), Xd)*Mathf.Rad2Deg;
+        Xbeta = Mathf.Atan2(Mathf.Abs(Xmiddle - bounds[0]), Xd) * Mathf.Rad2Deg;
         Xgamma = Mathf.Atan2(Mathf.Abs(Xmiddle - bounds[1]), Xd) * Mathf.Rad2Deg;
-        
 
-        
-        // minX < (fmaxX - fminX) / 2)
-        if (bounds[0] < Xmiddle)
+        // minX < (fmaxX - fminX) / 2
+        if (bounds[0] < Xmiddle) // cases 1,4,7
         {
-            if (bounds[1] < Xmiddle) _ret.x = Xbeta - Xgamma;
-            else _ret.x = Xbeta + Xgamma;
+            if (bounds[1] < Xmiddle) _ret.x = Xbeta - Xgamma; // case 1
+            else if (bounds[1] == Xmiddle) _ret.x = Xbeta; // case 4
+            else _ret.x = Xbeta + Xgamma; // case 7
         }
-        // minX > (fmaxX - fminX) / 2)
-        else if (bounds[0] > Xmiddle)
+        // minX > (fmaxX - fminX) / 2
+        else if (bounds[0] > Xmiddle) // cases 3,6,9
         {
-            if (bounds[1] < Xmiddle) throw new Exception("min>max!!");
-            else _ret.x = _ret.x = -Xbeta + Xgamma;
+            if (bounds[1] <= Xmiddle) throw new Exception("minX>maxX!!"); // cases 3,6
+            else _ret.x = -Xbeta + Xgamma; // case 9
         }
-        else
+        // minX == (fmaxX - fminX) / 2
+        else if (bounds[0] == Xmiddle) // cases 2,5,8
         {
-            // TODO: xMin is x/2 ??
+            if (bounds[1] < Xmiddle) throw new Exception("minX>maxX!!"); // case 2
+            else if (bounds[1] == Xmiddle) _ret.x = 0; // case 5
+            else _ret.x = Xgamma; // case 8
         }
 
         // ########### (2) compute y-angle
-        // TODO: How to get vertical FOV?
+        float Yalpha = fmaxFOVY / 2; // half the total field of view in degrees
+        float Yd = (fmaxY - fminY) / (2 * Mathf.Tan(Yalpha * Mathf.Deg2Rad)); // get viewing distance in px
+        float Ybeta; // angle between min and (fmax-fmin)/2
+        float Ygamma; // angle between max and (fmax-fmin)/2 
+        float Ymiddle; // exact middle of fov in px
+
+        Ymiddle = fminY + (fmaxY - fminY) / 2;
+
+        Ybeta = Mathf.Atan2(Mathf.Abs(Ymiddle - bounds[2]), Yd) * Mathf.Rad2Deg;
+        Ygamma = Mathf.Atan2(Mathf.Abs(Ymiddle - bounds[3]), Yd) * Mathf.Rad2Deg;
+
+        // minY < (fmaxY - fminY) / 2
+        if (bounds[2] < Ymiddle) // cases 1,4,7
+        {
+            if (bounds[3] < Ymiddle) _ret.y = Ybeta - Ygamma; // case 1
+            else if (bounds[1] == Ymiddle) _ret.y = Ybeta; // case 4
+            else _ret.y = Ybeta + Ygamma; // case 7
+        }
+        // minY > (fmaxY - fminY) / 2
+        else if (bounds[2] > Ymiddle) // cases 3,6,9
+        {
+            if (bounds[3] <= Ymiddle) throw new Exception("minY>maxY!!"); // cases 3,6
+            else _ret.y = -Ybeta + Ygamma; // case 9
+        }
+        // minY == (fmaxY - fminY) / 2
+        else if (bounds[2] == Ymiddle) // cases 2,5,8
+        {
+            if (bounds[3] < Ymiddle) throw new Exception("minY>maxY!!"); // case 2
+            else if (bounds[3] == Ymiddle) _ret.y = 0; // case 5
+            else _ret.y = Ygamma; // case 8
+        }
 
         return _ret;
+    }
+
+    public Vector2 ScreenSizeInDeg(GameObject go)
+    {
+        return ScreenSizeInDeg(getObjectBoundsPx(go));
     }
 
     /// <summary>
@@ -138,12 +176,13 @@ public class VisualDegrees : MonoBehaviour {
     {
         // create an instance of the object
         GameObject _tempObj = GameObject.Instantiate(go);
+        _tempObj.tag = "Untagged";
 
         // deactivate its MeshRenderer
-        _tempObj.GetComponent<MeshRenderer>().enabled = false;
+        //_tempObj.GetComponent<MeshRenderer>().enabled = false;
 
         // get bounds.extents for further calculation
-        Bounds tempBounds = _tempObj.GetComponentInChildren<BoxCollider>().bounds;
+        Bounds tempBounds = _tempObj.GetComponentInChildren<Renderer>().bounds;
 
         // destroy temporary object
         Destroy(_tempObj);
