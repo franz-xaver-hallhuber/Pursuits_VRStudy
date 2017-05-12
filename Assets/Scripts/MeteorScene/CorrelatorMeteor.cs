@@ -111,8 +111,7 @@ public class CorrelatorMeteor : MonoBehaviour {
         correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye;");
 
         // comparison of what is selected vs what the participant is told to look at
-        selectionWriter.WriteLine("timestamp;selectionTime;selectedObject;selectedXSizeDeg;selectedYSizeDeg;targetMeteor;targetSizeXDeg;targetSizeYDeg;correct?;correlationToIntendedObject;distanceToIntendedObject;radiusUU;centerUU;counterThreshold;"
-            + "correlationThreshold;correlationAverageWindow;correlationFrequency;w");
+        selectionWriter.WriteLine("timestamp;selectionTime;selectedObject;selectedObjectSizeDegX;selectedObjectSizeDegY;intendedObject;intendedObjectSizeDegX;intendedObjectSizeDegY;correct?;trajectoryResemblance;distanceToIntendedObjDeg;trajectoryRadiusDeg;trajectoryCenterDeg;currentPosDeg;degPerSec;trajectoryExceedsFOV;counterThreshold;correlationThreshold;correlationAverageWindow;correlationFrequency;correlationWindow");
         
         counterWriter.WriteLine("timestamp;selectedObject;intendedObject;1;2;3;4;5;6;7;8;9;10");
 
@@ -200,6 +199,7 @@ public class CorrelatorMeteor : MonoBehaviour {
         foreach (MovingMeteor mo in sceneObjects)
         {
             mo.updatePosition();
+            mo.TrajectoryOutOfView = mo.TrajectoryOutOfView || vg.amIOffScreen(mo._current);
         }
     }
         
@@ -443,9 +443,12 @@ public class CorrelatorMeteor : MonoBehaviour {
                                         + ";" + vg.ScreenSizeInDeg(_tempObjects.Find(x => x.Equals(lookAt + "")).getGameObject()).y
                                         + ";" + mm.aim
                                         + ";" + resemblance(_tempObjects[i], _tempObjects.Find(x => x.Equals(lookAt + "")))
-                                        + ";" + Vector2.Distance(_tempObjects[i]._current, _tempObjects.Find(x => x.Equals(lookAt + ""))._current)
-                                        + ";" + vg.radiusWidthInDeg(mm.getMinMaxInWorldCoor()[0], mm.getMinMaxInWorldCoor()[1])
-                                        + ";" + mm.getCenter()
+                                        + ";" + vg.radiusWidthInDeg(_tempObjects[i]._current, _tempObjects.Find(x => x.Equals(lookAt + ""))._current)
+                                        + ";" + vg.radiusWidthInDeg(mm.getMinMaxInLocalCoor()[0], mm.getMinMaxInLocalCoor()[1])
+                                        + ";" + vg.positionInDeg(mm.getCenter())
+                                        + ";" + vg.positionInDeg(mm._current)
+                                        + ";" + mm.getGameObject().GetComponent<CircularMovement>().degPerSec
+                                        + ";" + mm.TrajectoryOutOfView
                                         + ";" + counterThreshold
                                         + ";" + threshold
                                         + ";" + corrWindow

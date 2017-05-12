@@ -12,7 +12,8 @@ public class WalkingTask : MonoBehaviour {
     public float walkingTolerance;
 
     private Vector2 min, max;
-    private Quarters q;
+    List<float> x, z;
+    List<Vector2> corners;
     private StreamWriter walkingWriter;
 
     public bool _shouldStop { get; set; }
@@ -28,21 +29,20 @@ public class WalkingTask : MonoBehaviour {
         HmdQuad_t rect = new HmdQuad_t();
         SteamVR_PlayArea.GetBounds(SteamVR_PlayArea.Size.Calibrated, ref rect);
 
-        List<float> x, z;
+        
         x = new List<float>(new float[] { rect.vCorners0.v0, rect.vCorners1.v0, rect.vCorners2.v0, rect.vCorners3.v0 });
         z = new List<float>(new float[] { rect.vCorners0.v2, rect.vCorners1.v2, rect.vCorners2.v2, rect.vCorners3.v2 });
 
-        x.Sort();
-        z.Sort();
-
-        max = new Vector2(x[x.Count - 1], z[z.Count - 1]);
-        min = new Vector2(x[0], z[0]);
-
-        q = new Quarters(max, min);
-
+        corners = new List<Vector2>();
+        for (int i = 0; i < x.Count; i++)
+        {
+            corners.Add(new Vector2(x[i], z[i]));
+        }
+        
         walkingWriter = new StreamWriter(logFolder + @"\log_Walking_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv", true);
         walkingWriter.WriteLine("Timestamp;taskTime;taskDistance;taskVelocity");
     }
+
 	
 	// Update is called once per frame
 	public IEnumerator RunWalkingTask () {
@@ -58,14 +58,13 @@ public class WalkingTask : MonoBehaviour {
                 walkingWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";"
                     + (PupilGazeTracker.Instance._globalTime - _startTask).TotalSeconds + ";"
                     + Vector2.Distance(_currentDest, _lastDest));
-                _currentDest = q.getNextPosition(new Vector2(plane.transform.position.x, plane.transform.position.z));
+                _currentDest = corners[UnityEngine.Random.Range(1, corners.Count)];
                 _lastDest = new Vector2(plane.transform.position.x, plane.transform.position.z);
                 plane.transform.position = new Vector3(_currentDest.x, 0, _currentDest.y);
                 _startTask = PupilGazeTracker.Instance._globalTime;
             }
             yield return null;
         }
-        
     }
 
     private bool reachedDestination()

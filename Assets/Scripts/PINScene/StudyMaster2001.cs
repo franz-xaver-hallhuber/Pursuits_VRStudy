@@ -200,9 +200,8 @@ public class StudyMaster2001 : MonoBehaviour {
 
                 //get result from correlator and flash feedback
                 if (coco.selection == "") coco.selection = "-1";
-                
-                    result.Add(Convert.ToInt32(coco.selection));
 
+                result.Add(Convert.ToInt32(coco.selection));
 
                 digitWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds
                     + ";" + (PupilGazeTracker.Instance._globalTime - digitStart).TotalSeconds
@@ -211,7 +210,6 @@ public class StudyMaster2001 : MonoBehaviour {
                     + ";" + (Convert.ToInt32(coco.selection) == digits[_currentDigit])
                     + ";" + counterThreshold
                 );
-
                 
                 yield return new WaitForSeconds(0.5f);
             }

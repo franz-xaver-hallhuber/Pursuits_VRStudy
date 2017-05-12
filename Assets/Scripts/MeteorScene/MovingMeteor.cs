@@ -16,6 +16,7 @@ namespace Assets.Scripts
         private List<TimeSample> movingCorr;
         private Queue<TimePoint> tpBuffer;
         private bool IAmTarget;
+        public bool TrajectoryOutOfView;
         public int counter = 0;
         public TimeSpan creationTime;
 
@@ -98,12 +99,16 @@ namespace Assets.Scripts
             return go.GetComponent<CircularMovement>().radius;
         }
         
+        /// <summary>
+        /// Returns local center of the Meteor
+        /// </summary>
+        /// <returns></returns>
         public Vector3 getCenter()
         {
             return go.GetComponent<CircularMovement>().localCenter;
         }
 
-        public Vector3[] getMinMaxInWorldCoor()
+        public Vector3[] getMinMaxInLocalCoor()
         {
             Vector3 min = new Vector3(getCenter().x - getRadius(), getCenter().y, getCenter().z);
             Vector3 max = new Vector3(getCenter().x + getRadius(), getCenter().y, getCenter().z);

@@ -74,6 +74,8 @@ public class Correlator2 : MonoBehaviour {
     TimeSpan calcDur = new TimeSpan();
 
     Coroutine correlationCoroutine;
+
+    VisualDegrees vg;
     
     // Use this for initialization
     void Start () {
@@ -150,6 +152,9 @@ public class Correlator2 : MonoBehaviour {
 
         // start the selected correlation coroutine
         // now done by StudyMaster2001
+
+        vg = new VisualDegrees();
+        vg.Init(participantID, GameObject.Find("Camera (eye)").GetComponent<Camera>());
     }
     
 
@@ -314,6 +319,7 @@ public class Correlator2 : MonoBehaviour {
 
     IEnumerator CalculatePearson()
     {
+        TimeSpan coroutineStart = PupilGazeTracker.Instance._globalTime;
         while (!_shouldStop)
         {
             _pearsonIsRunning = true;
@@ -400,11 +406,13 @@ public class Correlator2 : MonoBehaviour {
                         if (enableHalo) _tempObjects[i].activate(false);
 
 
-                    selectionwriter.WriteLine(calcStart.TotalSeconds + ";"
-                            + _tempObjects[i].name + ";"
+                    selectionwriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";"
+                        + (PupilGazeTracker.Instance._globalTime - coroutineStart).TotalSeconds + ";"
+                        + lookAt + ";"
+                        + selection + ";"
+                        
                             + results[i] + ";"
                             + _tempObjects[i].speed + ";"
-                            + lookAt + ";"
                             + selection); // + ";"
                                           // + ((lookAt != 0 ) ? (resemblance(_tempObjects[i], intention).ToString()) : ""));
 

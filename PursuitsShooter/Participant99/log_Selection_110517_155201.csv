@@ -1,3 +1,0 @@
-timestamp;selectionTime;selectedObject;selectedXSizeDeg;selectedYSizeDeg;targetMeteor;targetSizeXDeg;targetSizeYDeg;correct?;correlationToIntendedObject;distanceToIntendedObject;radius;center;size;counterThreshold;correlationThreshold;correlationAverageWindow;correlationFrequency;w
-14.5782133;6.6421597;3;9.848623;9.136123;3;9.848623;9.136123;True;1;0;2.086771;(1.1, -1.1, 5.0);(246.7, 1116.6);20;0.6;900;0.08;300
-30.5611761;12.9799987;7;7.286931;6.879622;7;7.286931;6.879622;True;1;0;1.047735;(0.7, 1.6, 7.1);(337.7, 585.4);20;0.6;900;0.08;300

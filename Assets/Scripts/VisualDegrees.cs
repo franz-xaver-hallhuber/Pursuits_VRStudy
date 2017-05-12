@@ -16,11 +16,18 @@ public class VisualDegrees : MonoBehaviour {
     private float fmaxY;
     private float fatDepth;
 
+    float Xalpha; // half the total field of view in degrees
+    float Xd; // get viewing distance in px
+    float Xmiddle; // exact middle of fov in px
+
+    float Ymiddle; // exact middle of fov in px
+    float Yalpha; // half the total field of view in degrees
+    float Yd; // get viewing distance in px
+
     private Camera ec;
 
     public string UserDataFile = @"UserCalibData\UserData.csv";
     
- 
 	
     public void Init(int userID, Camera eyeCam)
     {
@@ -41,6 +48,14 @@ public class VisualDegrees : MonoBehaviour {
                     fmaxY = Convert.ToSingle(userData[6]);
                     fatDepth = Convert.ToSingle(userData[7]);
 
+                    Xalpha = fmaxFOVX / 2; // half the total horizontal field of view in degrees
+                    Xd = (fmaxX - fminX) / (2 * Mathf.Tan(Xalpha * Mathf.Deg2Rad)); // get viewing distance in px
+                    Xmiddle = fminX + (fmaxX - fminX) / 2;
+
+                    Yalpha = fmaxFOVY / 2; // half the total vertical field of view in degrees
+                    Yd = (fmaxY - fminY) / (2 * Mathf.Tan(Yalpha * Mathf.Deg2Rad)); // get viewing distance in px
+                    Ymiddle = fminY + (fmaxY - fminY) / 2;
+
                     return;
                 } else
                 {
@@ -52,38 +67,38 @@ public class VisualDegrees : MonoBehaviour {
         throw new KeyNotFoundException("Participant not found. Make sure calibration was executed.");
     }
 
-    //public double RenderWidthInDeg(GameObject go)
-    //{
-    //    double _ret;
-
-    //    // create an instance of the object
-    //    GameObject _tempObj = GameObject.Instantiate(go);
-
-    //    // deactivate its MeshRenderer
-    //    // _tempObj.GetComponent<MeshRenderer>().enabled = false;
-
-    //    // get bounds.extents for further calculation
-    //    Bounds tempBounds = _tempObj.GetComponentInChildren<Renderer>().bounds;
-
-    //    // destroy temporary object
-    //    Destroy(_tempObj);
-
-    //    // get size of object
-    //    float sizeX = tempBounds.size.x;
-    //    float sizeY = tempBounds.size.y;
-
-    //    double maxWidthAtDepth = 2 * go.transform.localPosition.z * ((fmaxX - fminX) / 2) / fatDepth;
-
-    //    _ret = (fmaxFOVX * sizeX / maxWidthAtDepth);
-
-    //    Debug.Log("Object " + go.name + " has angle " + _ret);
-
-    //    return _ret;
-    //}
-
-    public float radiusWidthInDeg(Vector3 minWorld, Vector3 maxWorld)
+    /// <summary>
+    /// gets angle for a specific position measured from the middle point 0°
+    /// </summary>
+    /// <param name="localPos"></param>
+    public Vector2 positionInDeg(Vector3 localPos)
     {
-        float[] rBounds = { ec.GetComponent<Camera>().WorldToScreenPoint(minWorld).x, ec.GetComponent<Camera>().WorldToScreenPoint(maxWorld).x, 0,0 };
+        Vector2 _ret = new Vector2();
+
+        Vector3 worldPos = ec.transform.TransformPoint(localPos);
+        Vector3 screenPos = ec.GetComponent<Camera>().WorldToScreenPoint(worldPos);
+
+        float xPx =  screenPos.x - Xmiddle;
+        _ret.x = Mathf.Atan2(xPx, Xd)*Mathf.Rad2Deg;
+
+        float yPx = screenPos.y - Ymiddle;
+        _ret.y = Mathf.Atan2(yPx, Yd)*Mathf.Rad2Deg;
+
+        return _ret;
+    }
+
+    public float radiusWidthInDeg(Vector3 minLocal, Vector3 maxLocal)
+    {
+        Camera cam = ec.GetComponent<Camera>();
+
+        if (maxLocal.x <minLocal.x)
+        {
+            Vector3 _temp = minLocal;
+            minLocal = maxLocal;
+            maxLocal = _temp;
+        }
+
+        float[] rBounds = { cam.WorldToScreenPoint(cam.transform.TransformPoint(minLocal)).x, cam.WorldToScreenPoint(cam.transform.TransformPoint(maxLocal)).x, 0,0 };
         return ScreenSizeInDeg(rBounds).x;
     }
 
@@ -91,17 +106,12 @@ public class VisualDegrees : MonoBehaviour {
     {
         Vector2 _ret = new Vector2();
 
-        
-
         // ########### (1) compute x-angle
-        float Xalpha = fmaxFOVX / 2; // half the total field of view in degrees
-        float Xd = (fmaxX - fminX) / (2 * Mathf.Tan(Xalpha * Mathf.Deg2Rad)); // get viewing distance in px
+
         float Xbeta; // angle between min and (fmax-fmin)/2
         float Xgamma; // angle between max and (fmax-fmin)/2 
-        float Xmiddle; // exact middle of fov in px
 
-        Xmiddle = fminX + (fmaxX - fminX) / 2;
-
+        
         Xbeta = Mathf.Atan2(Mathf.Abs(Xmiddle - bounds[0]), Xd) * Mathf.Rad2Deg;
         Xgamma = Mathf.Atan2(Mathf.Abs(Xmiddle - bounds[1]), Xd) * Mathf.Rad2Deg;
 
@@ -127,13 +137,12 @@ public class VisualDegrees : MonoBehaviour {
         }
 
         // ########### (2) compute y-angle
-        float Yalpha = fmaxFOVY / 2; // half the total field of view in degrees
-        float Yd = (fmaxY - fminY) / (2 * Mathf.Tan(Yalpha * Mathf.Deg2Rad)); // get viewing distance in px
+        
         float Ybeta; // angle between min and (fmax-fmin)/2
         float Ygamma; // angle between max and (fmax-fmin)/2 
-        float Ymiddle; // exact middle of fov in px
+        
 
-        Ymiddle = fminY + (fmaxY - fminY) / 2;
+        
 
         Ybeta = Mathf.Atan2(Mathf.Abs(Ymiddle - bounds[2]), Yd) * Mathf.Rad2Deg;
         Ygamma = Mathf.Atan2(Mathf.Abs(Ymiddle - bounds[3]), Yd) * Mathf.Rad2Deg;
@@ -165,6 +174,18 @@ public class VisualDegrees : MonoBehaviour {
     public Vector2 ScreenSizeInDeg(GameObject go)
     {
         return ScreenSizeInDeg(getObjectBoundsPx(go));
+    }
+
+    public bool amIOffScreen(Vector3 localPos)
+    {
+        Vector3 worldCoor = ec.transform.TransformPoint(localPos);
+        Vector3 screenCoor = ec.WorldToScreenPoint(worldCoor);
+        // a²+b²=c²; b: y component of point on circle around xMiddle with radius c at a: x component of position, c: xMax - Xmiddle
+        //Debug.Log("yDist to Middle" + Math.Abs(screenCoor.y - Ymiddle) + " point on circle " + Math.Sqrt(Math.Pow(fmaxX - Xmiddle, 2) - Math.Pow(screenCoor.x-Xmiddle, 2)));
+        float distance = Vector2.Distance(new Vector2(screenCoor.x, screenCoor.y), new Vector2(Xmiddle, Ymiddle));
+        //Debug.Log("Distance: " + distance + " radius " + (fmaxX - Xmiddle));
+        return distance > fmaxX - Xmiddle;
+        
     }
 
     /// <summary>
