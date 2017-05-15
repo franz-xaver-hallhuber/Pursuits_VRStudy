@@ -67,7 +67,7 @@ public class Correlator2 : MonoBehaviour {
     MovingObject gazeTrajectory;
 
     // logfiles
-    private StreamWriter correlationWriter, selectionwriter;
+    private StreamWriter correlationWriter, selectionWriter;
     public String logFolder = "Logfiles";
     
     // Timespan to measure the duration of calculating a correlation factor for all objects in sceneObjects
@@ -87,7 +87,7 @@ public class Correlator2 : MonoBehaviour {
             
             gazeTrajectory = new MovingObject(null, 0, participantID, logFolder);
             correlationWriter = new StreamWriter(logFolder + @"\log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-            selectionwriter = new StreamWriter(logFolder + @"\log_Selection_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+            selectionWriter = new StreamWriter(logFolder + @"\log_Selection_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
             // trajectoryWriter = new StreamWriter("log_Trajectories_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
 
             // logfile for correlator: name of GameObject; timestamp; corr.value x; corr.value y; w; correlation frequency;
@@ -95,7 +95,7 @@ public class Correlator2 : MonoBehaviour {
             correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye;");
 
             // comparison of what is selected vs what the participant is told to look at
-            selectionwriter.WriteLine("Timestamp;Name;smoothCorrel;speed;task;selected;correlationToIntendedObject");
+            selectionWriter.WriteLine("Timestamp;Name;smoothCorrel;speed;task;selected;correlationToIntendedObject");
 
             // search for objects tagged 'Trackable', give them an ID and add them to the list
             int _newid = 1;
@@ -133,14 +133,14 @@ public class Correlator2 : MonoBehaviour {
 
         // logger
         correlationWriter = new StreamWriter(logFolder + @"\log_Correlator_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-        selectionwriter = new StreamWriter(logFolder + @"\log_Selection_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
+        selectionWriter = new StreamWriter(logFolder + @"\log_Selection_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
 
         // logfile for correlator: name of GameObject; timestamp; corr.value x; corr.value y; w; coefficient average window; correlation frequency;
         // selected correlation (Pearson/Spearman); source for gaze data (left/right/both);
         correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye;");
 
         // comparison of what is selected vs what the participant is told to look at
-        selectionwriter.WriteLine("Timestamp;Name;smoothCorrel;speed;task;selected;correlationToIntendedObject");
+        selectionWriter.WriteLine("Timestamp;Name;smoothCorrel;speed;task;selected;correlationToIntendedObject;objectSize");
 
         // search for objects tagged 'Trackable', give them an ID and add them to the list
         // int _newid = 0;#
@@ -398,6 +398,20 @@ public class Correlator2 : MonoBehaviour {
                             if (sceneObjects[i].counter > counterThreshold)
                             {
                                 selection = sceneObjects[i].name;
+
+                                Vector3 _center = _tempObjects[i].getGameObject.GetComponent<CircularMovement>().localCenter;
+                                float _rad = _tempObjects[i].getGameObject.GetComponent<CircularMovement>().radius;
+
+                                selectionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";"
+                                    + (PupilGazeTracker.Instance._globalTime - coroutineStart).TotalSeconds + ";"
+                                    + lookAt + ";"
+                                    + selection + ";"
+                                    + results[i] + ";"
+                                    + _tempObjects[i].speed + ";"
+                                    + selection + ";"
+                                    + vg.ScreenSizeInDeg(_tempObjects[i].getGameObject) + ";"
+                                    + vg.radiusWidthInDeg(new Vector3(_center.x - _rad, _center.y, _center.z), new Vector3(_center.x + _rad, _center.y, _center.z)));
+
                                 break;
                             }
                         }
@@ -405,20 +419,13 @@ public class Correlator2 : MonoBehaviour {
                     else
                         if (enableHalo) _tempObjects[i].activate(false);
 
-
-                    selectionwriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";"
-                        + (PupilGazeTracker.Instance._globalTime - coroutineStart).TotalSeconds + ";"
-                        + lookAt + ";"
-                        + selection + ";"
-                        
-                            + results[i] + ";"
-                            + _tempObjects[i].speed + ";"
-                            + selection); // + ";"
+                     // + ";"
                                           // + ((lookAt != 0 ) ? (resemblance(_tempObjects[i], intention).ToString()) : ""));
-
                 }
             }
             //else Debug.Log("skip");
+
+
             _pearsonIsRunning = false;
 
             calcDur = PupilGazeTracker.Instance._globalTime - calcStart;
@@ -447,7 +454,7 @@ public class Correlator2 : MonoBehaviour {
         gazeTrajectory.killMe();
 
         correlationWriter.Close();
-        selectionwriter.Close();
+        selectionWriter.Close();
         gazeTrajectory.killMe();
         return 0;
     }

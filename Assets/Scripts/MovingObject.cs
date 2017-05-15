@@ -47,6 +47,14 @@ namespace Assets.Scripts
         private Queue<TimePoint> tpBuffer;
         public int counter = 0;
 
+        public GameObject getGameObject
+        {
+            get
+            {
+                return go;
+            }
+        }
+
         static bool copyinprogress, updateinprogess;
 
         public string name { get; set; }

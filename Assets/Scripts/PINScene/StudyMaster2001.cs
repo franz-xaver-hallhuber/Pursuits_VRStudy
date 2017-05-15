@@ -38,6 +38,7 @@ public class StudyMaster2001 : MonoBehaviour {
     private ATMScript atm;
     public int counterThreshold;
     private StreamWriter resultWriter, digitWriter;
+    VisualDegrees vd;
 
     // Use this for initialization
     void Start () {
@@ -89,7 +90,7 @@ public class StudyMaster2001 : MonoBehaviour {
                 if (i > 9) i = 0; // makes sure the last object is tagged "0"
 
                 GameObject newCube = GameObject.Instantiate(master, new Vector3(0,0,0), master.transform.localRotation, eyeCam.transform);
-                newCube.transform.localPosition = new Vector3(((i > 5 || i == 0) ? -1 : 1) * -1.5f, 0, 6); // because Instantiate location is global. cubes 1-5 on the left, 6-0 to the right
+                newCube.transform.localPosition = new Vector3(((i > 5 || i == 0) ? -1 : 1) * -1.5f, 0, 6); // because Instantiate location is global. cubes 1-5 on the left, 6-0 to the right, position is at +-1.5,0,6
                 newCube.tag = "Trackable";
                 newCube.transform.localScale = new Vector3(size, size, size);
                 newCube.GetComponent<MeshRenderer>().enabled = false;
@@ -130,8 +131,11 @@ public class StudyMaster2001 : MonoBehaviour {
         coco.justCount = true;
         coco.Init(studyName);
 
+        vd = new VisualDegrees();
+        vd.Init(Convert.ToInt32(participant), eyeCam.GetComponent<Camera>());
+
         resultWriter = new StreamWriter(coco.logFolder + @"\log_Results_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
-        resultWriter.WriteLine("Timestamp;SelectionTime;IntendedPIN;EnteredPIN;correct;counterThreshold");
+        resultWriter.WriteLine("Timestamp;SelectionTime;IntendedPIN;EnteredPIN;correct;counterThreshold;objectRadiusDeg");
 
         digitWriter = new StreamWriter(coco.logFolder + @"\log_Digits_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv");
         digitWriter.WriteLine("Timestamp;SelectionTime;IntendedDigit;EnteredDigit;correct;counterThreshold");
