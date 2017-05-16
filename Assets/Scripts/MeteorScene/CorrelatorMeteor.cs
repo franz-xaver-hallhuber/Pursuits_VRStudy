@@ -111,7 +111,7 @@ public class CorrelatorMeteor : MonoBehaviour {
         correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye;");
 
         // comparison of what is selected vs what the participant is told to look at
-        selectionWriter.WriteLine("timestamp;selectionTime;selectedObject;selectedObjectSizeDegX;selectedObjectSizeDegY;intendedObject;intendedObjectSizeDegX;intendedObjectSizeDegY;correct?;trajectoryResemblanceX;trajectoryResemblanceY;distanceToIntendedObjDeg;trajectoryRadiusDeg;trajectoryCenterDeg;currentPosDeg;degPerSec;trajectoryExceedsFOV;counterThreshold;correlationThreshold;correlationAverageWindow;correlationFrequency;correlationWindow");
+        selectionWriter.WriteLine("timestamp;selectionTime;selectedObject;selectedObjectSizeDegX;selectedObjectSizeDegY;intendedObject;intendedObjectSizeDegX;intendedObjectSizeDegY;correct?;trajectoryResemblanceX;trajectoryResemblanceY;distanceToIntendedObjDeg;trajectoryDiameterDeg;trajectoryCenterDeg;currentPosDeg;degPerSec;trajectoryExceedsFOV;counterThreshold;correlationThreshold;correlationAverageWindow;correlationFrequency;correlationWindow");
         
         counterWriter.WriteLine("timestamp;selectedObject;intendedObject;1;2;3;4;5;6;7;8;9;10");
 
@@ -200,6 +200,14 @@ public class CorrelatorMeteor : MonoBehaviour {
         {
             mo.updatePosition();
             mo.TrajectoryOutOfView = mo.TrajectoryOutOfView || vg.amIOffScreen(mo._current);
+        }
+        if (Input.GetKeyDown(KeyCode.I))
+        {
+            counterThreshold++;
+        }
+        if (Input.GetKeyDown(KeyCode.O))
+        {
+            counterThreshold--;
         }
     }
         
@@ -456,6 +464,8 @@ public class CorrelatorMeteor : MonoBehaviour {
                                         + ";" + corrFrequency
                                         + ";" + w
                                         );
+
+                                    selectionWriter.Flush();
                                 }
                                 catch (Exception e) { Debug.LogError(e.StackTrace); }
                             }
@@ -539,7 +549,7 @@ public class CorrelatorMeteor : MonoBehaviour {
 
         foreach (MovingMeteor mo in sceneObjects) mo.killMe();
         gazeTrajectory.killMe();
-
+        
         correlationWriter.Close();
         selectionWriter.Close();
         counterWriter.Close();
@@ -560,6 +570,7 @@ public class CorrelatorMeteor : MonoBehaviour {
             str += "\nTraj. Length: " + sceneObjects[0].trajectory.Count;
             str += "\nCorr Duration: " + calcDur.TotalMilliseconds + " ms";
             str += "\nlook at: " + lookAt;
+            str += "\ncounterThreshold: " + counterThreshold;
             GUI.TextArea(new Rect(200, 0, 200, 100), str);
         }
     }

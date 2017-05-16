@@ -31,7 +31,7 @@ public class CubeSize : MonoBehaviour {
         //float widthInWorld = vd.radiusWidthInDeg(minLocal, maxLocal);
 
         // Debug.Log("center: " + center + "radius: " + radius + " minLocal: " + minLocal + "maxLocal: " + maxLocal + " minWorld: " + minWorld + " maxWorld " + maxWorld + " degrees: " + widthInWorld);
-       Debug.Log("Cube visible " + vd.amIOffScreen(cube.transform.localPosition));
+        Debug.Log("Cube outside FOV " + vd.amIOffScreen(cube.transform.localPosition) + " Cube Size in Deg " + vd.ScreenSizeInDeg(cube));
 
         HmdQuad_t rect = new HmdQuad_t();
         SteamVR_PlayArea.GetBounds(SteamVR_PlayArea.Size.Calibrated, ref rect);

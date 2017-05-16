@@ -78,7 +78,7 @@ public class StudyMasterMeteor : MonoBehaviour {
 
                 // preferences of the new trajectory
                 bool counter = UnityEngine.Random.value >= 0.5f; // counterclockwise?
-                int degSec = UnityEngine.Random.Range(10, 90); // speed
+                int degSec = UnityEngine.Random.Range(25, 90); // speed
                 float rad = UnityEngine.Random.Range(0.5f, 2.5f); // radius
 
                 // where should the center of the new trajectory be?
@@ -94,7 +94,7 @@ public class StudyMasterMeteor : MonoBehaviour {
                 for (int i = 0; i<_atOnce ; i++)
                 {
                     GameObject _newMeteor = GameObject.Instantiate(meteorPrefab, new Vector3(0, 0, 0), UnityEngine.Random.rotation, eyeCam.transform);
-                    _newMeteor.transform.localPosition = new Vector3(_newCenter.x, _newCenter.y, _newCenter.z + 6); // +_newCenter.z); // because Instantiate location is global
+                    _newMeteor.transform.localPosition = new Vector3(_newCenter.x, _newCenter.y, _newCenter.z + 8); // +_newCenter.z); // because Instantiate location is global
                     _newMeteor.tag = "Trackable";
                     _newMeteor.transform.localScale = new Vector3(_scale, _scale, _scale);
                     _newMeteor.name = meteorCounter++.ToString();
