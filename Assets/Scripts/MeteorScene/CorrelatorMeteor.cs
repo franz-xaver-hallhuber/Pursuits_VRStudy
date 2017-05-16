@@ -111,7 +111,7 @@ public class CorrelatorMeteor : MonoBehaviour {
         correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye;");
 
         // comparison of what is selected vs what the participant is told to look at
-        selectionWriter.WriteLine("timestamp;selectionTime;selectedObject;selectedObjectSizeDegX;selectedObjectSizeDegY;intendedObject;intendedObjectSizeDegX;intendedObjectSizeDegY;correct?;trajectoryResemblance;distanceToIntendedObjDeg;trajectoryRadiusDeg;trajectoryCenterDeg;currentPosDeg;degPerSec;trajectoryExceedsFOV;counterThreshold;correlationThreshold;correlationAverageWindow;correlationFrequency;correlationWindow");
+        selectionWriter.WriteLine("timestamp;selectionTime;selectedObject;selectedObjectSizeDegX;selectedObjectSizeDegY;intendedObject;intendedObjectSizeDegX;intendedObjectSizeDegY;correct?;trajectoryResemblanceX;trajectoryResemblanceY;distanceToIntendedObjDeg;trajectoryRadiusDeg;trajectoryCenterDeg;currentPosDeg;degPerSec;trajectoryExceedsFOV;counterThreshold;correlationThreshold;correlationAverageWindow;correlationFrequency;correlationWindow");
         
         counterWriter.WriteLine("timestamp;selectedObject;intendedObject;1;2;3;4;5;6;7;8;9;10");
 
@@ -442,7 +442,8 @@ public class CorrelatorMeteor : MonoBehaviour {
                                         + ";" + vg.ScreenSizeInDeg(_tempObjects.Find(x => x.Equals(lookAt + "")).getGameObject()).x
                                         + ";" + vg.ScreenSizeInDeg(_tempObjects.Find(x => x.Equals(lookAt + "")).getGameObject()).y
                                         + ";" + mm.aim
-                                        + ";" + resemblance(_tempObjects[i], _tempObjects.Find(x => x.Equals(lookAt + "")))
+                                        + ";" + resemblanceXY(_tempObjects[i], _tempObjects.Find(x => x.Equals(lookAt + ""))).x
+                                        + ";" + resemblanceXY(_tempObjects[i], _tempObjects.Find(x => x.Equals(lookAt + ""))).y
                                         + ";" + vg.radiusWidthInDeg(_tempObjects[i]._current, _tempObjects.Find(x => x.Equals(lookAt + ""))._current)
                                         + ";" + vg.radiusWidthInDeg(mm.getMinMaxInLocalCoor()[0], mm.getMinMaxInLocalCoor()[1])
                                         + ";" + vg.positionInDeg(mm.getCenter())
@@ -505,6 +506,27 @@ public class CorrelatorMeteor : MonoBehaviour {
         }
         
         return _ret;
+    }
+
+    private Vector2 resemblanceXY(MovingMeteor wrong, MovingMeteor correct)
+    {
+        //Debug.Log("wrong: " + (wrong == null) + " correct: " + (correct == null));
+        double _ret = -1;
+        double pearsonX = 0, pearsonY = 0;
+
+        // ensure objects are not null
+        if (!((wrong == null) || (correct == null)))
+        {
+            pearsonX = Pearson.calculatePearson(wrong.getXPoints(), correct.getXPoints());
+            pearsonY = Pearson.calculatePearson(wrong.getYPoints(), correct.getYPoints());
+
+            if (double.IsNaN(pearsonX)) { pearsonX = 0; }
+            if (double.IsNaN(pearsonY)) { pearsonY = 0; }
+
+            _ret = ((pearsonX + pearsonY) / 2);
+        }
+
+        return new Vector2((float)pearsonX,(float)pearsonY);
     }
 
     public int endTrial()

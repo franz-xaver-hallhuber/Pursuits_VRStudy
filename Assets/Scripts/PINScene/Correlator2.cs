@@ -95,7 +95,7 @@ public class Correlator2 : MonoBehaviour {
             correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye;");
 
             // comparison of what is selected vs what the participant is told to look at
-            selectionWriter.WriteLine("Timestamp;Name;smoothCorrel;speed;task;selected;correlationToIntendedObject");
+            selectionWriter.WriteLine("Timestamp;SelectionTime;intendedObj;selectedObj;correct?;smoothCorrel;speed;objWidthInDeg;objHeightInDeg;radiusInDeg;distanceToIntendedDeg;correlationToIntendedObjectX;correlationToIntendedObjectY;corrThreshold;w;corrAverageWindow;corrFrequency");
 
             // search for objects tagged 'Trackable', give them an ID and add them to the list
             int _newid = 1;
@@ -406,11 +406,16 @@ public class Correlator2 : MonoBehaviour {
                                     + (PupilGazeTracker.Instance._globalTime - coroutineStart).TotalSeconds + ";"
                                     + lookAt + ";"
                                     + selection + ";"
+                                    + ((lookAt+"")==selection) + ";"
                                     + results[i] + ";"
                                     + _tempObjects[i].speed + ";"
-                                    + selection + ";"
-                                    + vg.ScreenSizeInDeg(_tempObjects[i].getGameObject) + ";"
-                                    + vg.radiusWidthInDeg(new Vector3(_center.x - _rad, _center.y, _center.z), new Vector3(_center.x + _rad, _center.y, _center.z)));
+                                    + vg.ScreenSizeInDeg(_tempObjects[i].getGameObject).x + ";"
+                                    + vg.ScreenSizeInDeg(_tempObjects[i].getGameObject).y + ";"
+                                    + vg.radiusWidthInDeg(new Vector3(_center.x - _rad, _center.y, _center.z), new Vector3(_center.x + _rad, _center.y, _center.z)) + ";"
+                                    + vg.radiusWidthInDeg(_tempObjects[i]._current, sceneObjects.Find(x => x.name == lookAt.ToString())._current) + ";"
+                                    + resemblanceXY(sceneObjects[i],sceneObjects.Find(x=>x.name==lookAt.ToString())).x + ";"
+                                    + resemblanceXY(sceneObjects[i], sceneObjects.Find(x => x.name == lookAt.ToString())).y + ";"
+                                    + threshold + ";" + w + ";" + corrWindow + ";" + corrFrequency);
 
                                 break;
                             }
@@ -445,6 +450,17 @@ public class Correlator2 : MonoBehaviour {
         if (double.IsNaN(pearsonY)) { pearsonY = 0; }
 
         return ((pearsonX + pearsonY) / 2);
+    }
+
+    private Vector2 resemblanceXY(MovingObject wrong, MovingObject correct)
+    {
+        double pearsonX = Pearson.calculatePearson(wrong.getXPoints(), correct.getXPoints());
+        double pearsonY = Pearson.calculatePearson(wrong.getYPoints(), correct.getYPoints());
+
+        if (double.IsNaN(pearsonX)) { pearsonX = 0; }
+        if (double.IsNaN(pearsonY)) { pearsonY = 0; }
+
+        return new Vector2((float)pearsonX, (float)pearsonY);
     }
 
     public int endTrial()

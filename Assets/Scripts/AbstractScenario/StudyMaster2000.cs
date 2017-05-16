@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -46,6 +47,9 @@ public class StudyMaster2000 : MonoBehaviour {
     private string _lastEntry;
 
     private StreamWriter conditionWriter;
+
+    
+    GameObject eyeCam;
 
     // Use this for initialization
     void Start () {
@@ -114,7 +118,7 @@ public class StudyMaster2000 : MonoBehaviour {
         if (_currentRun < combinations.Count)
         {
             GameObject master = GameObject.Find("cubePrefab");
-            GameObject eyeCam = GameObject.Find("Camera (eye)");
+            eyeCam = GameObject.Find("Camera (eye)");
 
             conditionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";"
                 + combinations[_currentRun].trajectoryRadius + ";"
@@ -170,6 +174,8 @@ public class StudyMaster2000 : MonoBehaviour {
         conditionWriter = new StreamWriter(logFolder + @"\log_Conditions_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv"); ;
         conditionWriter.WriteLine("timestamp;radius;size;depth");
         StartCoroutine(conductStudy());
+
+        
 
         // start walking task
         if (walkingTask)

@@ -52,6 +52,8 @@ public class Correlator : MonoBehaviour {
     public bool selectAimAuto = false;
     private TimeSpan startOfTrial;
 
+    VisualDegrees vd;
+
     // Use this for initialization
     void Start () {
         // Debug.Log("Start");
@@ -74,7 +76,7 @@ public class Correlator : MonoBehaviour {
             correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye;");
 
             // comparison of what is selected vs what the participant is told to look at
-            selectionWriter.WriteLine("Timestamp;Name;smoothCorrel;speed;task;selected;correlationToIntendedObject");
+            selectionWriter.WriteLine("Timestamp;SelectionTime;intendedObj;selectedObj;correct?;smoothCorrel;speed;objWidthInDeg;objHeightInDeg;radiusInDeg;distanceToIntendedDeg;correlationToIntendedObject;corrThreshold;w;corrAverageWindow;corrFrequency");
 
             // search for objects tagged 'Trackable', give them an ID and add them to the list
             int _newid = 1;
@@ -82,6 +84,9 @@ public class Correlator : MonoBehaviour {
             {
                 register(go, _newid++);
             }
+
+            vd = new VisualDegrees();
+            vd.Init(Convert.ToInt32(trialNo), GameObject.Find("Camera (eye)").GetComponent<Camera>());
 
             // Set listener for new gaze points
             PupilGazeTracker.OnEyeGaze += new PupilGazeTracker.OnEyeGazeDeleg(UpdateTrajectories);
@@ -115,13 +120,16 @@ public class Correlator : MonoBehaviour {
         //correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye;");
 
         // comparison of what is selected vs what the participant is told to look at
-        selectionWriter.WriteLine("Timestamp;SelectionTime;Name;smoothCorrel;intendedObject;correlationToIntendedObject;correct?;threshold;w;corrWindow;corrFrequency");
+        selectionWriter.WriteLine("Timestamp;SelectionTime;intendedObj;selectedObj;correct?;smoothCorrel;speed;objWidthInDeg;objHeightInDeg;radiusInDeg;distanceToIntendedDeg;correlationToIntendedObjectX;correlationToIntendedObjectY;corrThreshold;w;corrAverageWindow;corrFrequency");
 
         // search for objects tagged 'Trackable', give them an ID and add them to the list
         // do that in studymaster
 
         // Set listener for new gaze points
         PupilGazeTracker.OnEyeGaze += new PupilGazeTracker.OnEyeGazeDeleg(UpdateTrajectories);
+
+        vd = new VisualDegrees();
+        vd.Init(Convert.ToInt32(trialNo), GameObject.Find("Camera (eye)").GetComponent<Camera>());
 
         // start the selected correlation coroutine
         startCoroutine();
@@ -383,15 +391,22 @@ public class Correlator : MonoBehaviour {
                     _shouldStop = true;
 
                     TimeSpan totalTime = PupilGazeTracker.Instance._globalTime - startOfTrial;
+                    Vector3 _center = _tempObjects[i].getGameObject.GetComponent<CircularMovement>().localCenter;
+                    float _rad = _tempObjects[i].getGameObject.GetComponent<CircularMovement>().radius;
 
                     selectionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";" +
                         + totalTime.TotalSeconds + ";"
-                        + selection + ";"
-                        + results[i] + ";"
                         + lookAt + ";"
-                        + (resemblance(_tempObjects[i], intention).ToString()) + ";"
-                        + (selection == lookAt.ToString()) + ";"
-                        + threshold + ";" + w + ";" + corrWindow + ";" + corrFrequency + ";"
+                        + selection + ";"
+                        + ((lookAt + "") == selection) + ";"
+                        + results[i] + ";" + _tempObjects[i].speed + ";"
+                        + vd.ScreenSizeInDeg(_tempObjects[i].getGameObject).x + ";"
+                        + vd.ScreenSizeInDeg(_tempObjects[i].getGameObject).y + ";"
+                        + vd.radiusWidthInDeg(new Vector3(_center.x - _rad, _center.y, _center.z), new Vector3(_center.x + _rad, _center.y, _center.z)) + ";"
+                        + vd.radiusWidthInDeg(_tempObjects[i]._current, sceneObjects.Find(x => x.name == lookAt.ToString())._current) + ";"
+                        + resemblanceXY(sceneObjects[i], sceneObjects.Find(x => x.name == lookAt.ToString())).x + ";"
+                        + resemblanceXY(sceneObjects[i], sceneObjects.Find(x => x.name == lookAt.ToString())).y + ";"
+                        + threshold + ";" + w + ";" + corrWindow + ";" + corrFrequency
                         );
                 }
                 else
@@ -417,6 +432,17 @@ public class Correlator : MonoBehaviour {
         if (double.IsNaN(pearsonY)) { pearsonY = 0; }
 
         return ((pearsonX + pearsonY) / 2);
+    }
+
+    private Vector2 resemblanceXY(MovingObject wrong, MovingObject correct)
+    {
+        double pearsonX = Pearson.calculatePearson(wrong.getXPoints(), correct.getXPoints());
+        double pearsonY = Pearson.calculatePearson(wrong.getYPoints(), correct.getYPoints());
+
+        if (double.IsNaN(pearsonX)) { pearsonX = 0; }
+        if (double.IsNaN(pearsonY)) { pearsonY = 0; }
+
+        return new Vector2((float)pearsonX, (float)pearsonY);
     }
 
     public string endTrial()
