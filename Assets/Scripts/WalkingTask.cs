@@ -10,11 +10,13 @@ public class WalkingTask : MonoBehaviour {
     public GameObject plane;
     public GameObject ViveCamera;
     public float walkingTolerance;
+    public GameObject arrow;
 
     private Vector2 min, max;
     List<float> x, z;
     List<Vector2> corners, opposing;
     private StreamWriter walkingWriter;
+    Vector2 _lastDest;
 
     public bool _shouldStop { get; set; }
 
@@ -35,8 +37,8 @@ public class WalkingTask : MonoBehaviour {
         corners = new List<Vector2>();
         opposing = new List<Vector2>();
 
-       
 
+        arrow = GameObject.Find("Around");
         
         for (int i = 0; i < x.Count; i++)
         {
@@ -56,7 +58,7 @@ public class WalkingTask : MonoBehaviour {
         plane.GetComponent<MeshRenderer>().enabled = true;
         TimeSpan _startTask = PupilGazeTracker.Instance._globalTime;
         Vector2 _currentDest = Vector2.one;
-        Vector2 _lastDest = new Vector2(plane.transform.position.x, plane.transform.position.z);
+        _lastDest = new Vector2(plane.transform.position.x, plane.transform.position.z);
         int counter = 0;
 
         while (!_shouldStop)
@@ -69,6 +71,8 @@ public class WalkingTask : MonoBehaviour {
                 //_currentDest = corners[UnityEngine.Random.Range(1, corners.Count)];
                 _currentDest = opposing[counter % 2];
                 _lastDest = new Vector2(plane.transform.position.x, plane.transform.position.z);
+                //StartCoroutine(showSign());
+
                 plane.transform.position = new Vector3(_currentDest.x, 0, _currentDest.y);
                 _startTask = PupilGazeTracker.Instance._globalTime;
                 counter++;
@@ -83,7 +87,23 @@ public class WalkingTask : MonoBehaviour {
             new Vector2(ViveCamera.transform.position.x, ViveCamera.transform.position.z),
             new Vector2(plane.transform.position.x, plane.transform.position.z)) <= walkingTolerance);
     }
+
+    IEnumerator showSign()
+    {
+
+        Camera cam = GameObject.Find("Camera (eye)").GetComponent<Camera>();
+        
+
+
+        GameObject _temp = GameObject.Instantiate(arrow, new Vector3(_lastDest.x,GameObject.Find("Camera (eye)").transform.position.y,_lastDest.y), Quaternion.LookRotation(-cam.transform.right));
+
+        yield return new WaitForSeconds(3);
+
+        Destroy(_temp);
+    }
 }
+
+
 
 public class Quarters
 {

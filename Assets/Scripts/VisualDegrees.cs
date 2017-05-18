@@ -35,9 +35,9 @@ public class VisualDegrees : MonoBehaviour {
         ec = eyeCam;
         foreach (string s in File.ReadAllLines(UserDataFile))
         {
-            if (s.StartsWith(participant))
+            string[] userData = s.Split(';');
+            if (userData[0] == participant)
             {
-                string[] userData = s.Split(';');
                 if (userData.Length == 8)
                 {
                     fmaxFOVX = Convert.ToSingle(userData[1]);

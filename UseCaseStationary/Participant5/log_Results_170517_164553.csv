@@ -1,0 +1,5 @@
+Timestamp;SelectionTime;IntendedPIN;EnteredPIN;correct;counterThreshold;objectRadiusDeg
+33.1390501;20.8624778;8066;8066;True;20
+65.9339908;25.5545861;7594;7594;True;20
+104.6047273;31.7557237;5222;5221;False;20
+147.3068782;35.5626551;2170;-1;False;20

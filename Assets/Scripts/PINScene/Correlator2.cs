@@ -112,6 +112,8 @@ public class Correlator2 : MonoBehaviour {
         
 	}
 
+    
+
     private void selectAim()
     {
         lookAt = UnityEngine.Random.Range(1, sceneObjects.Count);
@@ -184,6 +186,14 @@ public class Correlator2 : MonoBehaviour {
             {
                 mo.updatePosition();
             }
+        }
+        if (Input.GetKeyDown(KeyCode.I))
+        {
+            counterThreshold++;
+        }
+        if (Input.GetKeyDown(KeyCode.O))
+        {
+            counterThreshold--;
         }
     }
         
@@ -488,6 +498,7 @@ public class Correlator2 : MonoBehaviour {
             str += "\nTraj. Length: " + sceneObjects[0].trajectory.Count;
             str += "\nCorr Duration: " + calcDur.TotalMilliseconds + " ms";
             str += "\nlook at: " + lookAt;
+            str += "\nCounter Threshold: " + counterThreshold;
             GUI.TextArea(new Rect(200, 0, 200, 100), str);
         }
     }

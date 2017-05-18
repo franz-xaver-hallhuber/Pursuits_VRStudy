@@ -11,6 +11,7 @@ public class StudyMaster2001 : MonoBehaviour {
     public string studyName;
     public int numberOfTrials, pinLength = 4;
     public float timeoutSec = 5;
+    public PupilGazeTracker.GazeSource eye;
 
     private List<int> pins, result, digits;
     private List<string> allResults;
@@ -117,7 +118,7 @@ public class StudyMaster2001 : MonoBehaviour {
         coco.corrFrequency = 0.08f; // in seconds, make sure this duration is longer than the average correlation cycle
         coco.w = 300;
         coco.corrWindow = 900;
-        coco.threshold = 0.6;
+        coco.threshold = 0.3;
         coco.Coefficient = Correlator2.CorrelationMethod.Pearson;
         coco.transparent = true;
         coco.waitForInit = true;
@@ -126,7 +127,7 @@ public class StudyMaster2001 : MonoBehaviour {
         coco.selectAimAuto = false;
         coco.enableHalo = false;
         coco.startRightAway = true;
-        coco.Gaze = PupilGazeTracker.GazeSource.BothEyes;
+        coco.Gaze = eye;
         coco.counterThreshold = counterThreshold;
         coco.justCount = true;
         coco.Init(studyName);

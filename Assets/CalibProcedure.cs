@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class CalibProcedure : MonoBehaviour {
 
-    public GameObject xBox, yBox, camera, xScale, yScale;
+    public GameObject xBox, yBox, camera, xScale, yScale, xTick, yTick;
 
     private string maxFOVX = "";
     private string maxFOVY = "";
@@ -32,6 +32,8 @@ public class CalibProcedure : MonoBehaviour {
             yScale.SetActive(false);
             xBox.SetActive(false);
             yBox.SetActive(false);
+            xTick.SetActive(false);
+            yTick.SetActive(false);
 
             if (Input.GetKeyDown(KeyCode.Q)) xScale.SetActive(true);
             if (Input.GetKeyDown(KeyCode.W)) yScale.SetActive(true);
@@ -122,6 +124,19 @@ public class CalibProcedure : MonoBehaviour {
 
             _yCopy.GetComponentInChildren<TextMesh>().text = i + "°";
             _xCopy.GetComponentInChildren<TextMesh>().text = i + "°";
+        }
+
+        for (int i = 1; i < 360; i ++)
+        {
+            if (!(i%5==0))
+            {
+                GameObject _yCopy = GameObject.Instantiate(yTick, GameObject.Find("yScale").transform);
+                GameObject _xCopy = GameObject.Instantiate(xTick, GameObject.Find("xScale").transform);
+
+                _yCopy.transform.localPosition = new Vector3(0, Mathf.Sin(i * Mathf.Deg2Rad) * yScaleObject.transform.localPosition.z, Mathf.Cos(i * Mathf.Deg2Rad) * yScaleObject.transform.localPosition.z);
+                _xCopy.transform.localPosition = new Vector3(Mathf.Sin(i * Mathf.Deg2Rad) * yScaleObject.transform.localPosition.z, 0, Mathf.Cos(i * Mathf.Deg2Rad) * yScaleObject.transform.localPosition.z);
+            }
+            
         }
 
         yScaleObject.GetComponentInChildren<MeshRenderer>().material.color = Color.blue;

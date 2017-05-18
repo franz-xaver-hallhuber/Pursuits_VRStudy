@@ -91,11 +91,11 @@ public class Correlator : MonoBehaviour {
             // Set listener for new gaze points
             PupilGazeTracker.OnEyeGaze += new PupilGazeTracker.OnEyeGazeDeleg(UpdateTrajectories);
 
+            
+
             // start the selected correlation coroutine
             startCoroutine();
         }
-        
-        
 	}
 
     public void selectAim()
