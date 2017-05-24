@@ -170,6 +170,7 @@ public class StudyMaster2000 : MonoBehaviour {
         coco.selectAimAuto = true;
         coco.enableHalo = false;
         coco.startRightAway = true;
+        coco.Gaze = PupilGazeTracker.GazeSource.LeftEye;
         string logFolder = coco.Init(studyName);
         conditionWriter = new StreamWriter(logFolder + @"\log_Conditions_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv"); ;
         conditionWriter.WriteLine("timestamp;radius;size;depth");

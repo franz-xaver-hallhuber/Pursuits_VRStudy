@@ -142,7 +142,7 @@ public class Correlator2 : MonoBehaviour {
         correlationWriter.WriteLine("Gameobject;Timestamp;rx;ry;w;corrWindow;corrFreq;corrMethod;eye;");
 
         // comparison of what is selected vs what the participant is told to look at
-        selectionWriter.WriteLine("Timestamp;Name;smoothCorrel;speed;task;selected;correlationToIntendedObject;objectSize");
+        selectionWriter.WriteLine("Timestamp;SelectionTime;intendedObj;selectedObj;correct?;smoothCorrel;speed;objWidthInDeg;objHeightInDeg;radiusInDeg;distanceToIntendedDeg;correlationToIntendedObjectX;correlationToIntendedObjectY;counterThreshold;corrThreshold;w;corrAverageWindow;corrFrequency");
 
         // search for objects tagged 'Trackable', give them an ID and add them to the list
         // int _newid = 0;#
@@ -412,20 +412,30 @@ public class Correlator2 : MonoBehaviour {
                                 Vector3 _center = _tempObjects[i].getGameObject.GetComponent<CircularMovement>().localCenter;
                                 float _rad = _tempObjects[i].getGameObject.GetComponent<CircularMovement>().radius;
 
-                                selectionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";"
+                                try
+                                {
+                                    selectionWriter.WriteLine(PupilGazeTracker.Instance._globalTime.TotalSeconds + ";"
                                     + (PupilGazeTracker.Instance._globalTime - coroutineStart).TotalSeconds + ";"
                                     + lookAt + ";"
                                     + selection + ";"
-                                    + ((lookAt+"")==selection) + ";"
+                                    + ((lookAt + "") == selection) + ";"
                                     + results[i] + ";"
                                     + _tempObjects[i].speed + ";"
                                     + vg.ScreenSizeInDeg(_tempObjects[i].getGameObject).x + ";"
                                     + vg.ScreenSizeInDeg(_tempObjects[i].getGameObject).y + ";"
                                     + vg.radiusWidthInDeg(new Vector3(_center.x - _rad, _center.y, _center.z), new Vector3(_center.x + _rad, _center.y, _center.z)) + ";"
                                     + vg.radiusWidthInDeg(_tempObjects[i]._current, sceneObjects.Find(x => x.name == lookAt.ToString())._current) + ";"
-                                    + resemblanceXY(sceneObjects[i],sceneObjects.Find(x=>x.name==lookAt.ToString())).x + ";"
+                                    + resemblanceXY(sceneObjects[i], sceneObjects.Find(x => x.name == lookAt.ToString())).x + ";"
                                     + resemblanceXY(sceneObjects[i], sceneObjects.Find(x => x.name == lookAt.ToString())).y + ";"
+                                    + counterThreshold + ";"
                                     + threshold + ";" + w + ";" + corrWindow + ";" + corrFrequency);
+                                } catch
+                                {
+                                    
+                                }
+                                
+
+                                
 
                                 break;
                             }

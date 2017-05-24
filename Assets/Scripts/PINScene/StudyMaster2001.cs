@@ -118,7 +118,7 @@ public class StudyMaster2001 : MonoBehaviour {
         coco.corrFrequency = 0.08f; // in seconds, make sure this duration is longer than the average correlation cycle
         coco.w = 300;
         coco.corrWindow = 900;
-        coco.threshold = 0.3;
+        coco.threshold = 0.5;
         coco.Coefficient = Correlator2.CorrelationMethod.Pearson;
         coco.transparent = true;
         coco.waitForInit = true;

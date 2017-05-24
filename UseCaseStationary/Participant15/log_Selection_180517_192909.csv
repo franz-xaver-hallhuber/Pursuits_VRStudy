@@ -1,0 +1,5 @@
+Timestamp;SelectionTime;intendedObj;selectedObj;correct?;smoothCorrel;speed;objWidthInDeg;objHeightInDeg;radiusInDeg;distanceToIntendedDeg;correlationToIntendedObjectX;correlationToIntendedObjectY;counterThreshold;corrThreshold;w;corrAverageWindow;corrFrequency
+32.1796912;8.8985581;8;8;True;0.9105901;45;8.880321;7.478564;17.70063;0;1;1;20;0.4;300;900;0.08
+36.709688;13.4285549;5;5;True;0.4813966;30;10.58055;7.505134;19.09403;0;1;1;20;0.4;300;900;0.08
+41.3524749;18.0713418;3;3;True;0.7142287;30;9.734522;8.095423;19.09403;0;1;1;20;0.4;300;900;0.08
+47.0024421;23.721309;4;4;True;0.6989244;30;10.58468;7.518241;19.09402;0;1;1;20;0.4;300;900;0.08
