@@ -23,7 +23,7 @@ public class StudyMaster2000 : MonoBehaviour {
 
     public int numberOfObjects;
     public float[] radii, sizes, depths;
-    public bool automatic, walkingTask;
+    public bool automatic, walkingTask, constantVelocity;
     public string studyName;
 
     private List<Trial> combinations;
@@ -126,6 +126,9 @@ public class StudyMaster2000 : MonoBehaviour {
                 + combinations[_currentRun].objectDepth
                 );
 
+            // use 45°/s at r=1.5 as reference velocity
+            float rVel = 2.5f * 45 * Mathf.Deg2Rad;
+
             for (int i = 0; i < numberOfObjects; i++)
             {
                 GameObject newCube = GameObject.Instantiate(master, new Vector3(0,0,0), master.transform.localRotation, eyeCam.transform);
@@ -141,6 +144,9 @@ public class StudyMaster2000 : MonoBehaviour {
                 cm.radius = resize(combinations[_currentRun].trajectoryRadius, combinations[_currentRun].objectDepth);
                 cm.shouldStart = false;
                 cm.waitForInit = false;
+                if (constantVelocity) cm.degPerSec = Mathf.Rad2Deg * rVel / combinations[_currentRun].trajectoryRadius;
+
+                Debug.Log("depth " + combinations[_currentRun].objectDepth + " radius " + combinations[_currentRun].trajectoryRadius + " corrected Rad " + cm.radius + " rVel " + rVel + " degPerSec " + cm.degPerSec);
             }
                     
         } else

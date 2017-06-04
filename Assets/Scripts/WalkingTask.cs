@@ -10,7 +10,7 @@ public class WalkingTask : MonoBehaviour {
     public GameObject plane;
     public GameObject ViveCamera;
     public float walkingTolerance;
-    public GameObject arrow;
+    //public GameObject arrow;
 
     private Vector2 min, max;
     List<float> x, z;
@@ -38,7 +38,7 @@ public class WalkingTask : MonoBehaviour {
         opposing = new List<Vector2>();
 
 
-        arrow = GameObject.Find("Around");
+        //arrow = GameObject.Find("Around");
         
         for (int i = 0; i < x.Count; i++)
         {
@@ -73,7 +73,7 @@ public class WalkingTask : MonoBehaviour {
                 _lastDest = new Vector2(plane.transform.position.x, plane.transform.position.z);
                 //StartCoroutine(showSign());
 
-                plane.transform.position = new Vector3(_currentDest.x, 0, _currentDest.y);
+                plane.transform.position = new Vector3(_currentDest.x, ViveCamera.transform.position.y, _currentDest.y);
                 _startTask = PupilGazeTracker.Instance._globalTime;
                 counter++;
             }
@@ -95,11 +95,11 @@ public class WalkingTask : MonoBehaviour {
         
 
 
-        GameObject _temp = GameObject.Instantiate(arrow, new Vector3(_lastDest.x,GameObject.Find("Camera (eye)").transform.position.y,_lastDest.y), Quaternion.LookRotation(-cam.transform.right));
+        //GameObject _temp = GameObject.Instantiate(arrow, new Vector3(_lastDest.x,GameObject.Find("Camera (eye)").transform.position.y,_lastDest.y), Quaternion.LookRotation(-cam.transform.right));
 
         yield return new WaitForSeconds(3);
 
-        Destroy(_temp);
+        //Destroy(_temp);
     }
 }
 
