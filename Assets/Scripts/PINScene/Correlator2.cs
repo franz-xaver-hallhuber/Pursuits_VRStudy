@@ -434,9 +434,6 @@ public class Correlator2 : MonoBehaviour {
                                     
                                 }
                                 
-
-                                
-
                                 break;
                             }
                         }

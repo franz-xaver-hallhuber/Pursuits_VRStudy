@@ -36,10 +36,14 @@ public class StudyMaster2000a : MonoBehaviour {
     }
 
     public state currentState { get; private set; }
+    public int counterThreshold;
+
+    public double timeLimit = 10;
+
     private string participant = "";
     private int _currentRun = 0;
 
-    private CorrelatorA coco;
+    private Correlator2A coco;
     private GameObject correlator;
     private bool _abort;
     private string _lastEntry;
@@ -132,6 +136,7 @@ public class StudyMaster2000a : MonoBehaviour {
                 newCube.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
                 newCube.GetComponent<MeshRenderer>().enabled = false;
                 newCube.transform.localPosition = new Vector3(0, 0, 6); // because Instantiate location is global
+                newCube.name = (i + 1) + "";
 
                 CircularMovement cm = newCube.GetComponent<CircularMovement>();
                 cm.startAngleDeg = i * (360 / numberOfObjects);
@@ -150,34 +155,39 @@ public class StudyMaster2000a : MonoBehaviour {
         
     }
 
+
+
     private void startStudy()
     {
-        correlator = new GameObject("Correlator2");
-        coco = correlator.AddComponent<CorrelatorA>();
+        correlator = new GameObject("Correlator2A");
+        coco = correlator.AddComponent<Correlator2A>();
 
         _abort = false;
+        
 
         // set Correlator variables
-        coco.corrFrequency = 0.1f;
+        coco.corrFrequency = 0.2f;
         coco.w = 300;
         coco.corrWindow = 900;
         coco.threshold = pearsonThreshold;
-        coco.Coefficient = CorrelatorA.CorrelationMethod.Pearson;
+        coco.Coefficient = Correlator2A.CorrelationMethod.Pearson;
         coco.transparent = true;
         coco.waitForInit = true;
         coco._shouldStop = true;
-        coco.trialNo = Convert.ToInt32(participant);
+        coco.participantID = Convert.ToInt32(participant);
         coco.selectAimAuto = true;
         coco.enableHalo = false;
         coco.startRightAway = true;
-        coco.Gaze = PupilGazeTracker.GazeSource.LeftEye;
+        coco.Gaze = PupilGazeTracker.GazeSource.BothEyes;
+        coco.justCount = true;
+        coco.MaxTimeLimitSec = timeLimit;
+        coco.counterThreshold = counterThreshold;
         string logFolder = coco.Init(studyName);
+
         conditionWriter = new StreamWriter(logFolder + @"\log_Conditions_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv"); ;
         conditionWriter.WriteLine("timestamp;radius;velocity;walking");
         StartCoroutine(conductStudy());
-
         
-
         // start walking task
         if (walkingTask)
         {
@@ -197,20 +207,25 @@ public class StudyMaster2000a : MonoBehaviour {
     /// <returns></returns>
     IEnumerator conductStudy()
     {
+
+        currentState = state.readyToStart;
+        StartCoroutine(waitforStart());
+
+        // wait until user hits space
+        while (currentState == state.readyToStart) yield return null;
+
         while (_currentRun < combinations.Count)
         {
             // prepare the scene
-            createObjects();
-            _abort = false; // reset abort flag
             
-            // registers objects and selects aim
-            coco.registerNewObjectsAndSetAim();
+            _abort = false; // reset abort flag
 
-            currentState = state.readyToStart;
-            StartCoroutine(waitforStart());
+            createObjects();
 
-            // wait until user hits space
-            while (currentState == state.readyToStart) yield return null;
+            //selects aim
+            coco.registerObjectsAndSelectAim();
+
+            yield return new WaitForSeconds(1);
 
             // start correlator
             coco._shouldStop = false;
@@ -219,7 +234,7 @@ public class StudyMaster2000a : MonoBehaviour {
             // wait until an object is selected
             while (!coco._shouldStop) yield return null; 
 
-            _lastEntry = coco.clearGazeAndRemoveObjects(); //reset the Correlator
+            _lastEntry = coco.Reset(); //reset the Correlator
 
             // wait until all objects are killed
             while (GameObject.FindGameObjectsWithTag("Trackable").Length != 0) yield return null;
