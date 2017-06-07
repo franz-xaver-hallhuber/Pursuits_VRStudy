@@ -1,0 +1,65 @@
+\boolfalse {citerequest}\boolfalse {citetracker}\boolfalse {pagetracker}\boolfalse {backtracker}\relax 
+\defcounter {refsection}{0}\relax 
+\select@language {english}
+\defcounter {refsection}{0}\relax 
+\select@language {english}
+\defcounter {refsection}{0}\relax 
+\select@language {ngerman}
+\defcounter {refsection}{0}\relax 
+\select@language {english}
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {1}Introduction}{1}{section.1}
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {2}Conceptual Framework}{3}{section.2}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {2.1}Eye Tracking}{3}{subsection.2.1}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\numberline {2.1.1}Pursuits}{3}{subsubsection.2.1.1}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {2.2}Virtual Reality}{3}{subsection.2.2}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {2.3}Eye-based interaction in VR}{3}{subsection.2.3}
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {3}Design Space}{5}{section.3}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {3.1}User Bound Objects}{5}{subsection.3.1}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {3.2}World Bound Objects}{5}{subsection.3.2}
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {4}Implementation}{7}{section.4}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {4.1}Communication with the Eye Tracker}{7}{subsection.4.1}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {4.2}Interpretation of Gaze Data using Pursuits}{7}{subsection.4.2}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {4.3}Measurement of the Field of View Wearing a Virtual Reality Headset}{7}{subsection.4.3}
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {5}Evaluation}{11}{section.5}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {5.1}Trial Study}{11}{subsection.5.1}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\numberline {5.1.1}Setting}{11}{subsubsection.5.1.1}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\numberline {5.1.2}Procedure}{12}{subsubsection.5.1.2}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\numberline {5.1.3}Results and Discussion}{12}{subsubsection.5.1.3}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {5.2}Main Study}{12}{subsection.5.2}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\numberline {5.2.1}Abstract Scenario}{13}{subsubsection.5.2.1}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\numberline {5.2.2}Use Case Scenario}{14}{subsubsection.5.2.2}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\numberline {5.2.3}Objective Results}{15}{subsubsection.5.2.3}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\numberline {5.2.4}Subjective Results}{15}{subsubsection.5.2.4}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\numberline {5.2.5}Discussion}{15}{subsubsection.5.2.5}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {5.3}Follow-Up Study}{15}{subsection.5.3}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\numberline {5.3.1}Results and Discussion}{15}{subsubsection.5.3.1}
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {6}Conclusion}{17}{section.6}
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {7}Limitations and Future Work}{19}{section.7}
