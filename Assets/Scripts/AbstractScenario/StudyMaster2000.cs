@@ -181,7 +181,6 @@ public class StudyMaster2000 : MonoBehaviour {
         conditionWriter = new StreamWriter(logFolder + @"\log_Conditions_" + DateTime.Now.ToString("ddMMyy_HHmmss") + ".csv"); ;
         conditionWriter.WriteLine("timestamp;radius;size;depth");
         StartCoroutine(conductStudy());
-
         
 
         // start walking task

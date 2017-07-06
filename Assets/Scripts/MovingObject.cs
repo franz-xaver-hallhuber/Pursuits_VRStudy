@@ -41,12 +41,6 @@ namespace Assets.Scripts
     public class MovingObject : ICloneable, IEquatable<MovingObject>
     {
         GameObject go;
-        private StreamWriter positionWriter;
-        public Vector3 _current { get; set; }
-        private List<TimeSample> movingCorr;
-        private Queue<TimePoint> tpBuffer;
-        public int counter = 0;
-
         public GameObject getGameObject
         {
             get
@@ -57,6 +51,12 @@ namespace Assets.Scripts
 
         static bool copyinprogress, updateinprogess;
 
+        private StreamWriter positionWriter;
+        private List<TimeSample> movingCorr;
+        private Queue<TimePoint> tpBuffer;
+
+        public Vector3 _current { get; set; } // current local position of the game object
+        public int counter = 0; // number of fixations
         public string name { get; set; }
         public float speed
         {
@@ -71,8 +71,7 @@ namespace Assets.Scripts
                 else return 0;
             }
         }
-        public List<TimePoint> trajectory { get; set; }
-
+        public List<TimePoint> trajectory { get; set; } // list of positions within the last w seconds
         public trajectoryType myTrajectory;
 
         public MovingObject(GameObject go, int id, int trial, string path)
@@ -123,8 +122,9 @@ namespace Assets.Scripts
         }
 
         /// <summary>
-        /// if the oldest timestamp was more than w ticks ago, remove the oldest
+        /// if the oldest TimePoint was more than y milliseconds ago, remove the oldest
         /// </summary>
+        /// <param name="w"></param>
         void cleanUpTraj(int w)
         {
             //if (trajectory.Count > 120) trajectory.RemoveAt(0);
@@ -143,6 +143,10 @@ namespace Assets.Scripts
             go.GetComponent<Renderer>().material.color = Color.red;
         }
 
+        /// <summary>
+        /// if the oldest TimeSample was more than y milliseconds ago, remove the oldest
+        /// </summary>
+        /// <param name="y">correlation average window in milliseconds</param>
         void cleanUpCorr(int y)
         {
             if (movingCorr.Count > 0)
@@ -155,12 +159,15 @@ namespace Assets.Scripts
             }
         }
 
+        /// <summary>
+        /// clear position trajectory and 
+        /// </summary>
         public void flush()
         {
             trajectory.Clear();
+            movingCorr.Clear();
             counter = 0;
         }
-
 
         /// <summary>
         /// Adds a new Correlation value to the list
@@ -196,10 +203,6 @@ namespace Assets.Scripts
             cleanUpTraj(w);
         }
 
-        /// <summary>
-        /// Get current timestamp from PupilGazeTracker
-        /// </summary>
-        /// <returns>Current Global Timestamp</returns>
         private double now()
         {
             return PupilGazeTracker.Instance._globalTime.TotalSeconds;
@@ -262,6 +265,12 @@ namespace Assets.Scripts
             _current = go.transform.localPosition;
         }
 
+        /// <summary>
+        /// Use this method, if this class is used for the gaze trajectory. Adds a new gaze point to the trajectory
+        /// </summary>
+        /// <param name="timeDelay">Time of data transfer</param>
+        /// <param name="gazePoint">Gaze Parameters</param>
+        /// <param name="w">length of the time window for Pearson correlation</param>
         public void addNewGaze(float timeDelay, Vector3 gazePoint, int w)
         {
             TimePoint tp = new TimePoint(now() - timeDelay, gazePoint);
@@ -277,6 +286,10 @@ namespace Assets.Scripts
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public List<double> getXPoints()
         {
             List<double> ret = new List<double>();
@@ -320,6 +333,9 @@ namespace Assets.Scripts
             UnityEngine.Object.Destroy(go);
         }
 
+        /// <summary>
+        /// return a clone of this object to calculate with
+        /// </summary>
         public object Clone()
         {
             while (updateinprogess) {  }

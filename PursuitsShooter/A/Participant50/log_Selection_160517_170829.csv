@@ -1,0 +1,4 @@
+timestamp;selectionTime;selectedObject;selectedObjectSizeDegX;selectedObjectSizeDegY;intendedObject;intendedObjectSizeDegX;intendedObjectSizeDegY;correct?;trajectoryResemblanceX;trajectoryResemblanceY;distanceToIntendedObjDeg;trajectoryRadiusDeg;trajectoryCenterDeg;currentPosDeg;degPerSec;trajectoryExceedsFOV;counterThreshold;correlationThreshold;correlationAverageWindow;correlationFrequency;correlationWindow
+19.1754003;8.2935131;0;12.9473;11.68167;0;12.9473;11.68167;True;1;1;0;11.75361;(12.0, 26.0);(13.8, 20.7);50;True;20;0.6;900;0.08;300
+24.0543547;1.8905254;14;21.49257;22.45454;14;21.49257;22.45454;True;1;1;0;33.24733;(3.7, 4.1);(-7.3, 17.6);70;False;20;0.6;900;0.08;300
+33.2634377;6.2181474;23;19.95862;20.53094;23;19.95862;20.53094;True;1;1;0;14.76437;(-11.5, -8.3);(-13.9, -15.8);79;False;20;0.6;900;0.08;300

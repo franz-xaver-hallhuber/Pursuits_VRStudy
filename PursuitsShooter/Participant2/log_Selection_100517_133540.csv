@@ -1,2 +1,0 @@
-timestamp;selectionTime;selectedObject;selectedSizeDeg;targetMeteor;targetSizeDeg;correct?;correlationToIntendedObject;distanceToIntendedObject;radius;center;size;counterThreshold;correlationThreshold;correlationAverageWindow;correlationFrequency;w
-29.653356;6.1357223;6;0.0498957987168835;6;0.0498957987168835;True;1;0;0.5719573;(0.7, 0.2, 6.0);(45.0, 310.8);20;0.6;900;0.08;300

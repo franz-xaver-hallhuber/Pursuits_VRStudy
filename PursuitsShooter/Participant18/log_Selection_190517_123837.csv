@@ -1,8 +1,0 @@
-timestamp;selectionTime;selectedObject;selectedObjectSizeDegX;selectedObjectSizeDegY;intendedObject;intendedObjectSizeDegX;intendedObjectSizeDegY;correct?;trajectoryResemblanceX;trajectoryResemblanceY;distanceToIntendedObjDeg;trajectoryDiameterDeg;trajectoryCenterDeg;currentPosDeg;degPerSec;trajectoryExceedsFOV;counterThreshold;correlationThreshold;correlationAverageWindow;correlationFrequency;correlationWindow
-17.1828058;4.8213522;4;7.067294;6.434298;3;11.11992;13.09001;False;0.9999593;0.9999186;9.730976;8.513165;(-15.0, -2.1);(-16.9, 2.0);87;False;15;0.6;900;0.08;300
-21.2471611;1.0698519;3;11.38803;13.03494;3;11.38803;13.03494;True;1;1;0;18.73111;(-3.7, -2.6);(-8.8, 5.3);86;False;15;0.6;900;0.08;300
-27.239143;3.0070155;11;23.17336;22.62677;9;24.17839;19.75363;False;-0.3660021;0.9998909;0.683754;39.37016;(11.7, -1.6);(29.3, -7.9);89;False;15;0.6;900;0.08;300
-31.3260382;1.0959211;9;24.1975;19.66247;9;24.1975;19.66247;True;1;1;0;39.37016;(11.7, -1.6);(29.9, -4.6);89;False;15;0.6;900;0.08;300
-36.8703449;2.5518033;6;9.513609;7.776441;14;8.136481;8.712155;False;0.998019;0.9999481;10.07926;10.2931;(-1.6, -10.9);(-6.1, -8.6);49;False;15;0.6;900;0.08;300
-41.7994846;1.9406731;14;8.574999;9.061633;14;8.574999;9.061633;True;1;1;0;13.04893;(10.5, 2.1);(10.5, 8.8);57;False;17;0.6;900;0.08;300
-49.1912158;4.4057633;10;23.63447;18.06752;10;23.63447;18.06752;True;1;1;0;39.37015;(11.7, -1.6);(-9.1, 1.6);89;False;17;0.6;900;0.08;300

@@ -12,10 +12,12 @@ using System.Text;
 public class Correlator : MonoBehaviour {
     
     public PupilGazeTracker.GazeSource Gaze;
-    public double threshold;
+
+
+    public double threshold; // Pearson threshold
+
     // w: time window for the correlation algorithm, corrWindow: time window in which correlation coefficients are averaged
-    // timeframeCounter: duration in ms after which an object is selected in case of applyTimeframeCounter. 
-    public int w, corrWindow, timeframeCounter;
+    public int w, corrWindow;
     public float corrFrequency;
     public enum CorrelationMethod { Pearson, Spearman };
     public CorrelationMethod Coefficient;
@@ -53,12 +55,8 @@ public class Correlator : MonoBehaviour {
     private TimeSpan startOfTrial;
 
     VisualDegrees vd;
-
-    // Use this for initialization
+    
     void Start () {
-        // Debug.Log("Start");
-        
-
         if (!waitForInit)
         {
             sceneObjects = new List<MovingObject>();
@@ -331,7 +329,7 @@ public class Correlator : MonoBehaviour {
 
             // work with copies to (hopefully) improve performance
             _cloningInProgress = true;
-            foreach (MovingObject mo in sceneObjects) _tempObjects.Add((MovingObject)mo.Clone()); //
+            foreach (MovingObject mo in sceneObjects) _tempObjects.Add((MovingObject)mo.Clone()); 
 
             MovingObject _tempGaze = (MovingObject) gazeTrajectory.Clone();
             _cloningInProgress = false;
