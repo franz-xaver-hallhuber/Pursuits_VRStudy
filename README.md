@@ -1,4 +1,10 @@
-## PupilHMDCalibration
+## Pursuits in VR
+Master Thesis Project
+User study (N=26) conducted with Unity. We investigated how parameters that are specific to VR settings influence the perfor-
+mance of selecting moving targets with gaze using Pursuits. Full paper see here: https://perceptual.mpi-inf.mpg.de/files/2018/04/khamis18_avi.pdf
+
+Software based On
+# PupilHMDCalibration
 
 This project provides the calibration process of Pupil HMD hardware and eye gaze data streaming to Unity. 
 
